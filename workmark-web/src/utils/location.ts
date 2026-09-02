@@ -1,0 +1,2 @@
+export const formatJobLocation = (location?: string, country?: string): string =>
+  [location, country].filter((value, index, values) => value && values.indexOf(value) === index).join(', ') || 'Location unavailable';
