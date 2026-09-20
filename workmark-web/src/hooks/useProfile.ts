@@ -47,11 +47,13 @@ export const useUploadResume = () => {
 
 export const useUploadAvatar = () => {
   const queryClient = useQueryClient();
+  const { refetchUser } = useAuth();
 
   return useMutation({
     mutationFn: (file: File) => profilesApi.uploadAvatar(file),
-    onSuccess: () => {
+    onSuccess: async () => {
       queryClient.invalidateQueries({ queryKey: ['profile'] });
+      await refetchUser();
       toast.success('Avatar updated successfully!');
     },
     onError: (error: any) => {

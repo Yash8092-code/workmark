@@ -5,10 +5,14 @@ import SavedJob from '../models/SavedJob';
 import Job from '../models/Job';
 import { paginate } from '../utils/helpers';
 
+import mongoose from 'mongoose';
+
 export const saveJob = asyncHandler(async (req: Request, res: Response) => {
   const { jobId } = req.params;
 
-  const job = await Job.findById(jobId);
+  const job = mongoose.isValidObjectId(jobId)
+    ? await Job.findById(jobId)
+    : await Job.findOne({ externalId: jobId });
 
   if (!job) {
     throw new AppError('Job not found', 404);
@@ -16,7 +20,7 @@ export const saveJob = asyncHandler(async (req: Request, res: Response) => {
 
   const existingSavedJob = await SavedJob.findOne({
     userId: req.user?._id,
-    jobId,
+    jobId: job._id,
   });
 
   if (existingSavedJob) {
@@ -30,7 +34,7 @@ export const saveJob = asyncHandler(async (req: Request, res: Response) => {
 
   await SavedJob.create({
     userId: req.user?._id,
-    jobId,
+    jobId: job._id,
   });
 
   res.status(201).json({
@@ -67,9 +71,15 @@ export const getSavedJobs = asyncHandler(async (req: Request, res: Response) => 
 export const unsaveJob = asyncHandler(async (req: Request, res: Response) => {
   const { jobId } = req.params;
 
+  const job = mongoose.isValidObjectId(jobId)
+    ? await Job.findById(jobId)
+    : await Job.findOne({ externalId: jobId });
+
+  const targetJobId = job ? job._id : jobId;
+
   const savedJob = await SavedJob.findOne({
     userId: req.user?._id,
-    jobId,
+    jobId: targetJobId,
   });
 
   if (!savedJob) {

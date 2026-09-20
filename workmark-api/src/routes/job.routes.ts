@@ -9,15 +9,15 @@ import {
   getEmployerJobs,
   getFeaturedJobs,
 } from '../controllers/job.controller';
-import { authenticate, authorize } from '../middleware/auth';
+import { authenticate, authorize, optionalAuthenticate } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { createJobSchema, updateJobSchema } from '../validators/job.validator';
 
 const router = Router();
 
-router.get('/', getJobs);
+router.get('/', optionalAuthenticate, getJobs);
 router.get('/featured', getFeaturedJobs);
-router.get('/:id', getJob);
+router.get('/:id', optionalAuthenticate, getJob);
 
 router.use(authenticate);
 router.use(authorize('employer'));

@@ -1,9 +1,10 @@
 import { useMemo } from 'react';
-import { Bell, CheckCheck, Sparkles, Clock } from 'lucide-react';
+import { Bell, CheckCheck, Sparkles, Clock, ArrowRight } from 'lucide-react';
 import { useNotifications, useMarkAllAsRead, useMarkAsRead } from '../hooks/useNotifications';
 import { Button } from '../components/ui/Button';
 import { DashboardLayout } from '../components/layout/DashboardLayout';
 import { isToday, formatDistanceToNow } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 
 export default function NotificationsPage() {
   const { data, isLoading, isError } = useNotifications({ limit: 50 });
@@ -11,7 +12,10 @@ export default function NotificationsPage() {
   const markAllAsRead = useMarkAllAsRead();
   const notifications = data?.data ?? [];
 
-  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
+  const unreadCount = useMemo(
+    () => notifications.filter((n) => !(n.isRead ?? n.read)).length,
+    [notifications]
+  );
 
   // Group notifications into Today and Earlier
   const { todayNotifications, earlierNotifications } = useMemo(() => {
@@ -32,30 +36,28 @@ export default function NotificationsPage() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-4xl mx-auto space-y-6">
+      <div className="max-w-4xl mx-auto space-y-6 animate-fadeIn">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-[#E2E8F0] shadow-xs">
+        <div className="genz-card-raised p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <span className="p-1.5 rounded-lg bg-blue-50 text-blue-600 border border-blue-200">
-                <Bell className="h-4 w-4" />
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-blue-600">Activity Center</span>
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-indigo-500/15 text-indigo-400 mb-2 border border-indigo-500/30">
+              <Bell className="h-3.5 w-3.5" />
+              Activity Center
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">Notifications</h1>
-            <p className="text-sm text-[#64748B] mt-1">
-              Real-time alerts regarding applications, matches, and profile activity.
+            <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">Notifications</h1>
+            <p className="text-sm font-medium text-slate-300 mt-0.5">
+              Real-time updates regarding your applications, stages, and interviews.
             </p>
           </div>
 
           <Button
-            variant="outline"
+            variant="secondary"
             size="sm"
             onClick={() => markAllAsRead.mutate()}
             disabled={unreadCount === 0 || markAllAsRead.isPending}
-            className="rounded-xl font-bold self-start sm:self-auto"
+            className="self-start sm:self-auto rounded-2xl text-xs font-bold bg-slate-900 border-white/10 text-slate-200 hover:text-white hover:bg-slate-800"
           >
-            <CheckCheck className="h-4 w-4 mr-2" />
+            <CheckCheck className="h-4 w-4 mr-1.5" />
             <span>Mark all read ({unreadCount})</span>
           </Button>
         </div>
@@ -63,31 +65,31 @@ export default function NotificationsPage() {
         {isLoading && (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-20 bg-white rounded-2xl border border-[#E2E8F0] animate-pulse" />
+              <div key={i} className="h-24 genz-card rounded-3xl animate-pulse bg-slate-900/60" />
             ))}
           </div>
         )}
 
         {isError && (
-          <div className="p-4 bg-red-50 text-red-600 rounded-2xl border border-red-200 text-sm">
+          <div className="genz-card rounded-3xl p-6 bg-rose-500/10 border border-rose-500/20 text-sm font-bold text-rose-300">
             Notifications are temporarily unavailable.
           </div>
         )}
 
         {!isLoading && !isError && notifications.length === 0 && (
-          <div className="bg-white rounded-3xl border border-[#E2E8F0] p-12 text-center shadow-xs">
-            <div className="h-16 w-16 rounded-2xl bg-[#F8FAFC] text-[#94A3B8] flex items-center justify-center mx-auto mb-4 border border-[#E2E8F0]">
+          <div className="genz-card rounded-3xl p-12 text-center">
+            <div className="h-16 w-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/20">
               <Bell className="h-8 w-8" />
             </div>
-            <h2 className="text-lg font-bold text-[#0F172A] mb-1">You're all caught up</h2>
-            <p className="text-sm text-[#64748B]">New updates regarding your applications and matches will appear here.</p>
+            <h2 className="text-lg font-black text-white mb-1">You're all caught up</h2>
+            <p className="text-sm font-medium text-slate-400">New updates regarding your applications and matches will appear here.</p>
           </div>
         )}
 
         {/* Today's Section */}
         {todayNotifications.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#64748B] px-1">Today</h2>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-400 px-2">Today</h2>
             {todayNotifications.map((notification) => (
               <NotificationItem
                 key={notification._id}
@@ -101,7 +103,7 @@ export default function NotificationsPage() {
         {/* Earlier Section */}
         {earlierNotifications.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[#64748B] px-1">Earlier</h2>
+            <h2 className="text-xs font-black uppercase tracking-wider text-slate-400 px-2">Earlier</h2>
             {earlierNotifications.map((notification) => (
               <NotificationItem
                 key={notification._id}
@@ -123,46 +125,75 @@ function NotificationItem({
   notification: any;
   onMarkRead: () => void;
 }) {
-  const isUnread = !notification.read;
+  const navigate = useNavigate();
+  const isUnread = !(notification.isRead ?? notification.read);
+
+  const handleClick = () => {
+    if (isUnread) {
+      onMarkRead();
+    }
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
 
   return (
     <div
-      className={`p-5 rounded-2xl border transition-all flex items-start gap-4 ${
+      onClick={handleClick}
+      role="button"
+      tabIndex={0}
+      className={`genz-card rounded-3xl p-5 transition-all flex items-start gap-4 border cursor-pointer hover:scale-[1.01] ${
         isUnread
-          ? 'bg-blue-50/40 border-blue-200 shadow-xs'
-          : 'bg-white border-[#E2E8F0] hover:border-[#CBD5E1]'
+          ? 'border-cyan-500/40 bg-slate-900/80 shadow-[0_0_20px_rgba(56,189,248,0.15)]'
+          : 'border-white/5 bg-slate-900/40 hover:border-white/15'
       }`}
     >
       <div
-        className={`h-9 w-9 rounded-xl flex items-center justify-center shrink-0 ${
-          isUnread ? 'bg-blue-600 text-white' : 'bg-[#F1F5F9] text-[#64748B]'
+        className={`h-11 w-11 rounded-2xl flex items-center justify-center shrink-0 border ${
+          isUnread
+            ? 'bg-gradient-to-br from-cyan-500 to-blue-600 text-white border-cyan-400 shadow-md shadow-cyan-500/30'
+            : 'bg-slate-800/80 text-slate-400 border-white/5'
         }`}
       >
-        <Sparkles className="h-4 w-4" />
+        <Sparkles className="h-5 w-5" />
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center justify-between gap-2">
-          <h3 className={`text-sm font-bold text-[#0F172A] ${isUnread ? 'text-blue-950' : ''}`}>
+          <h3 className={`text-sm font-black ${isUnread ? 'text-cyan-300' : 'text-white'}`}>
             {notification.title}
           </h3>
-          <span className="text-[11px] text-[#64748B] flex items-center gap-1 shrink-0">
+          <span className="text-[11px] font-semibold text-slate-400 flex items-center gap-1 shrink-0">
             <Clock className="h-3 w-3" />
             <span>{formatDistanceToNow(new Date(notification.createdAt), { addSuffix: true })}</span>
           </span>
         </div>
 
-        <p className="text-xs sm:text-sm text-[#475569] mt-1 leading-relaxed">{notification.message}</p>
+        <p className="text-xs sm:text-sm font-medium text-slate-300 mt-1 leading-relaxed">
+          {notification.message}
+        </p>
 
-        {isUnread && (
-          <button
-            type="button"
-            className="text-xs font-bold text-blue-600 mt-2 hover:underline cursor-pointer"
-            onClick={onMarkRead}
-          >
-            Mark as read
-          </button>
-        )}
+        <div className="flex items-center gap-4 mt-3">
+          {notification.link && (
+            <span className="inline-flex items-center gap-1 text-xs font-bold text-cyan-400 hover:text-cyan-300 hover:underline">
+              <span>View details</span>
+              <ArrowRight className="h-3 w-3" />
+            </span>
+          )}
+
+          {isUnread && (
+            <button
+              type="button"
+              className="text-xs font-bold text-slate-400 hover:text-white hover:underline cursor-pointer"
+              onClick={(e) => {
+                e.stopPropagation();
+                onMarkRead();
+              }}
+            >
+              Mark as read
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

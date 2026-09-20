@@ -140,52 +140,52 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
         aria-expanded={isOpen}
         className={`w-full flex items-center justify-between rounded-xl border transition-all duration-150 text-left ${sizeClasses[size]} ${
           error
-            ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-100 bg-red-50/20'
+            ? 'border-red-500/60 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 bg-red-950/20'
             : isOpen
-            ? 'border-[#2563EB] ring-4 ring-[#2563EB]/10 bg-white shadow-sm'
-            : 'border-[#E2E8F0] hover:border-[#CBD5E1] bg-white'
-        } ${disabled ? 'opacity-50 cursor-not-allowed bg-[#F8FAFC]' : 'cursor-pointer'}`}
+            ? 'border-cyan-400 ring-4 ring-cyan-500/20 bg-slate-900/90 shadow-lg'
+            : 'border-white/10 hover:border-cyan-500/40 bg-slate-900/70 text-slate-100'
+        } ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-950' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-2.5 truncate">
           {isAllSelected ? (
             <>
               <span className="text-lg leading-none">🌎</span>
-              <span className="font-medium text-[#0F172A]">{allLabel}</span>
+              <span className="font-medium text-slate-100">{allLabel}</span>
             </>
           ) : selectedCountry ? (
             <>
               <span className="text-lg leading-none shadow-xs">{selectedCountry.flag}</span>
-              <span className="font-medium text-[#0F172A] truncate">{selectedCountry.name}</span>
-              <span className="text-xs uppercase font-semibold text-[#94A3B8] bg-[#F1F5F9] px-1.5 py-0.5 rounded">
+              <span className="font-medium text-slate-100 truncate">{selectedCountry.name}</span>
+              <span className="text-xs uppercase font-semibold text-slate-400 bg-slate-800 border border-white/5 px-1.5 py-0.5 rounded">
                 {selectedCountry.code}
               </span>
             </>
           ) : (
             <>
-              <Globe className="h-4 w-4 text-[#94A3B8]" />
-              <span className="text-[#94A3B8]">{placeholder}</span>
+              <Globe className="h-4 w-4 text-slate-400" />
+              <span className="text-slate-400">{placeholder}</span>
             </>
           )}
         </div>
         <ChevronDown
-          className={`h-4 w-4 text-[#64748B] transition-transform duration-200 flex-shrink-0 ${
-            isOpen ? 'rotate-180 text-[#2563EB]' : ''
+          className={`h-4 w-4 text-slate-400 transition-transform duration-200 flex-shrink-0 ${
+            isOpen ? 'rotate-180 text-cyan-400' : ''
           }`}
         />
       </button>
 
       {supportingText && !error && (
-        <p className="mt-1.5 text-xs text-[#64748B] leading-relaxed">{supportingText}</p>
+        <p className="mt-1.5 text-xs text-slate-400 leading-relaxed">{supportingText}</p>
       )}
-      {error && <p className="mt-1.5 text-xs text-red-600 font-medium">{error}</p>}
+      {error && <p className="mt-1.5 text-xs text-rose-400 font-medium">{error}</p>}
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute z-50 mt-2 w-full rounded-2xl bg-white border border-[#E2E8F0] shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-100">
+        <div className="absolute z-50 mt-2 w-full rounded-2xl bg-[#0D1322] border border-white/15 shadow-[0_20px_50px_rgba(0,0,0,0.85)] overflow-hidden backdrop-blur-xl animate-in fade-in zoom-in-95 duration-100">
           {/* Search box inside dropdown */}
-          <div className="p-2.5 border-b border-[#F1F5F9] bg-[#F8FAFC]">
+          <div className="p-2.5 border-b border-white/10 bg-slate-950/60">
             <div className="relative flex items-center">
-              <Search className="absolute left-3 h-3.5 w-3.5 text-[#94A3B8]" />
+              <Search className="absolute left-3 h-3.5 w-3.5 text-slate-400" />
               <input
                 ref={searchInputRef}
                 type="text"
@@ -195,7 +195,7 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                   setHighlightedIndex(0);
                 }}
                 placeholder="Search country or code..."
-                className="w-full pl-8.5 pr-3 py-1.5 text-xs rounded-lg border border-[#E2E8F0] bg-white focus:outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 placeholder:text-[#94A3B8]"
+                className="w-full pl-8.5 pr-3 py-1.5 text-xs rounded-lg border border-white/10 bg-slate-900 text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-500/20 placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -207,8 +207,8 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
             className="max-h-60 overflow-y-auto p-1.5 space-y-0.5"
           >
             {filteredCountries.length === 0 ? (
-              <li className="px-3 py-6 text-center text-xs text-[#64748B]">
-                No country found matching "<span className="font-medium text-[#0F172A]">{searchQuery}</span>"
+              <li className="px-3 py-6 text-center text-xs text-slate-400">
+                No country found matching "<span className="font-medium text-slate-200">{searchQuery}</span>"
               </li>
             ) : (
               filteredCountries.map((c, index) => {
@@ -230,25 +230,25 @@ export const CountrySelector: React.FC<CountrySelectorProps> = ({
                       setSearchQuery('');
                     }}
                     onMouseEnter={() => setHighlightedIndex(index)}
-                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-sm cursor-pointer transition-colors duration-100 ${
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs cursor-pointer transition-colors ${
                       isSelected
-                        ? 'bg-[#2563EB]/10 text-[#2563EB] font-medium'
+                        ? 'bg-blue-500/20 text-cyan-300 font-semibold border border-blue-500/30'
                         : isHighlighted
-                        ? 'bg-[#F1F5F9] text-[#0F172A]'
-                        : 'text-[#334155]'
+                        ? 'bg-slate-800 text-slate-100'
+                        : 'text-slate-300 hover:bg-slate-800/80 hover:text-white'
                     }`}
                   >
                     <div className="flex items-center gap-2.5 truncate">
-                      <span className="text-lg leading-none">{c.flag}</span>
+                      <span className="text-base leading-none">{c.flag}</span>
                       <span className="truncate">{c.name}</span>
                       {c.code !== 'all' && (
-                        <span className="text-[10px] uppercase font-bold text-[#94A3B8] tracking-wider">
+                        <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
                           {c.code}
                         </span>
                       )}
                     </div>
                     {isSelected && (
-                      <Check className="h-4 w-4 text-[#2563EB] flex-shrink-0 ml-2" />
+                      <Check className="h-4 w-4 text-cyan-400 flex-shrink-0 ml-2" />
                     )}
                   </li>
                 );

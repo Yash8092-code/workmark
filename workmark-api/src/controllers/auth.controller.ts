@@ -19,7 +19,18 @@ const generate6DigitOTP = (): string => {
 };
 
 export const register = asyncHandler(async (req: Request, res: Response) => {
-  const { name, email, password, role, companyName, countryCode, countryName } = req.body;
+  const {
+    name,
+    email,
+    mobileNumber,
+    username,
+    password,
+    role,
+    companyName,
+    countryCode,
+    countryName,
+    domains,
+  } = req.body;
 
   let validatedCountryCode: string | undefined;
   let validatedCountryName: string | undefined;
@@ -35,93 +46,45 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     }
   }
 
-  const existingUser = await User.findOne({ email });
-  if (existingUser) {
-    if (existingUser.isVerified) {
-      throw new AppError('An account with this email address already exists.', 400);
-    }
-    // If user registered previously but didn't verify, update password and re-send OTP
-    existingUser.name = name;
-    existingUser.password = password;
-    existingUser.role = role || existingUser.role || 'job_seeker';
-    if (validatedCountryCode) {
-      existingUser.countryCode = validatedCountryCode;
-      existingUser.countryName = validatedCountryName;
-      if (existingUser.jobAlertPreferences) {
-        existingUser.jobAlertPreferences.countries = [validatedCountryCode];
-      }
-    }
+  const cleanEmail = email.toLowerCase().trim();
+  const cleanUsername = (username || email.split('@')[0]).toLowerCase().trim();
 
-    const otp = generate6DigitOTP();
-    existingUser.emailVerification = {
-      otpHash: hashValue(otp),
-      otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      otpAttempts: 0,
-      lastOtpSentAt: new Date(),
-    };
-
-    await existingUser.save();
-
-    await emailService.sendOTPEmail({
-      to: existingUser.email,
-      name: existingUser.name,
-      otp,
-      expiresInMinutes: 10,
-    });
-
-    const token = generateToken(existingUser._id.toString(), existingUser.role);
-
-    res.status(200).json({
-      success: true,
-      message: 'Registration pending email verification. A verification code has been sent to your email.',
-      data: {
-        user: {
-          _id: existingUser._id,
-          name: existingUser.name,
-          email: existingUser.email,
-          role: existingUser.role,
-          avatar: existingUser.avatar,
-          isVerified: false,
-          emailVerified: false,
-          isActive: existingUser.isActive,
-          countryCode: existingUser.countryCode,
-          countryName: existingUser.countryName,
-        },
-        token,
-        requireVerification: true,
-      },
-    });
-    return;
+  // Check if email already registered
+  const existingEmailUser = await User.findOne({ email: cleanEmail });
+  if (existingEmailUser) {
+    throw new AppError('An account with this email address already exists.', 400);
   }
 
-  const otp = generate6DigitOTP();
-  const otpHash = hashValue(otp);
+  // Check if username already registered
+  const existingUsernameUser = await User.findOne({ username: cleanUsername });
+  if (existingUsernameUser) {
+    throw new AppError('This username is already taken. Please choose another username.', 400);
+  }
+
+  const selectedDomains: string[] = Array.isArray(domains) ? domains.filter(Boolean) : [];
 
   const user = await User.create({
     name,
-    email,
+    email: cleanEmail,
+    username: cleanUsername,
+    mobileNumber: mobileNumber?.trim(),
+    domains: selectedDomains,
     password,
     role: role || 'job_seeker',
-    isVerified: false,
-    emailVerified: false,
+    isVerified: true,
+    emailVerified: true,
     countryCode: validatedCountryCode,
     countryName: validatedCountryName,
-    emailVerification: {
-      otpHash,
-      otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-      otpAttempts: 0,
-      lastOtpSentAt: new Date(),
-    },
     emailNotifications: {
       newJobs: true,
       applicationUpdates: true,
       marketing: false,
     },
     jobAlertPreferences: {
-      keywords: [],
+      keywords: selectedDomains,
       locations: [],
       countries: validatedCountryCode ? [validatedCountryCode] : [],
-      categories: [],
+      categories: selectedDomains,
       employmentTypes: [],
       workModes: [],
       experienceLevels: [],
@@ -131,7 +94,8 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
   if (user.role === 'job_seeker') {
     await Profile.create({
       userId: user._id,
-      skills: [],
+      phone: mobileNumber?.trim(),
+      skills: selectedDomains,
       education: [],
       experience: [],
       projects: [],
@@ -146,14 +110,6 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
     });
   }
 
-  // Send OTP Email via Resend
-  await emailService.sendOTPEmail({
-    to: user.email,
-    name: user.name,
-    otp,
-    expiresInMinutes: 10,
-  });
-
   const token = generateToken(user._id.toString(), user.role);
 
   res.cookie('token', token, {
@@ -165,102 +121,15 @@ export const register = asyncHandler(async (req: Request, res: Response) => {
 
   res.status(201).json({
     success: true,
-    message: 'Registration successful. Please verify your email with the 6-digit code sent to your inbox.',
+    message: 'Account created successfully! Welcome to Workmark.',
     data: {
       user: {
         _id: user._id,
         name: user.name,
         email: user.email,
-        role: user.role,
-        avatar: user.avatar,
-        isVerified: user.isVerified,
-        emailVerified: user.emailVerified,
-        isActive: user.isActive,
-        countryCode: user.countryCode,
-        countryName: user.countryName,
-      },
-      token,
-      requireVerification: true,
-    },
-  });
-});
-
-export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
-  const { email, otp } = req.body;
-
-  const user = await User.findOne({ email }).select('+password');
-
-  if (!user) {
-    throw new AppError('Invalid verification request. No user found.', 400);
-  }
-
-  if (user.isVerified && user.emailVerified) {
-    const token = generateToken(user._id.toString(), user.role);
-    res.status(200).json({
-      success: true,
-      message: 'Email is already verified.',
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          avatar: user.avatar,
-          isVerified: true,
-          emailVerified: true,
-          isActive: user.isActive,
-          countryCode: user.countryCode,
-          countryName: user.countryName,
-        },
-        token,
-      },
-    });
-    return;
-  }
-
-  if (!user.emailVerification || !user.emailVerification.otpHash) {
-    throw new AppError('No verification code found. Please request a new code.', 400);
-  }
-
-  if ((user.emailVerification.otpAttempts ?? 0) >= 5) {
-    throw new AppError('Too many failed attempts. Please request a new verification code.', 429);
-  }
-
-  if (user.emailVerification.otpExpiresAt && new Date() > new Date(user.emailVerification.otpExpiresAt)) {
-    throw new AppError('Verification code has expired. Please request a new one.', 400);
-  }
-
-  const providedHash = hashValue(otp);
-
-  if (providedHash !== user.emailVerification.otpHash) {
-    user.emailVerification.otpAttempts = (user.emailVerification.otpAttempts ?? 0) + 1;
-    await user.save({ validateBeforeSave: false });
-    throw new AppError('Invalid verification code. Please check and try again.', 400);
-  }
-
-  // OTP verified successfully
-  user.isVerified = true;
-  user.emailVerified = true;
-  user.emailVerification = undefined;
-  await user.save({ validateBeforeSave: false });
-
-  const token = generateToken(user._id.toString(), user.role);
-
-  res.cookie('token', token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  res.status(200).json({
-    success: true,
-    message: 'Email verified successfully! Your account is now active.',
-    data: {
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
+        username: user.username,
+        mobileNumber: user.mobileNumber,
+        domains: user.domains,
         role: user.role,
         avatar: user.avatar,
         isVerified: true,
@@ -270,71 +139,37 @@ export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
         countryName: user.countryName,
       },
       token,
+      requireVerification: false,
     },
   });
 });
 
-export const resendOTP = asyncHandler(async (req: Request, res: Response) => {
-  const { email } = req.body;
-
-  const user = await User.findOne({ email });
-
-  if (!user) {
-    // Avoid user enumeration
-    res.status(200).json({
-      success: true,
-      message: 'If an account exists with this email, a new verification code has been sent.',
-    });
-    return;
-  }
-
-  if (user.isVerified) {
-    res.status(200).json({
-      success: true,
-      message: 'Your email is already verified.',
-    });
-    return;
-  }
-
-  // Enforce 60s cooldown
-  if (user.emailVerification?.lastOtpSentAt) {
-    const elapsedMs = Date.now() - new Date(user.emailVerification.lastOtpSentAt).getTime();
-    const cooldownMs = 60 * 1000;
-    if (elapsedMs < cooldownMs) {
-      const remainingSec = Math.ceil((cooldownMs - elapsedMs) / 1000);
-      throw new AppError(`Please wait ${remainingSec} seconds before requesting a new code.`, 429);
-    }
-  }
-
-  const otp = generate6DigitOTP();
-  const otpHash = hashValue(otp);
-
-  user.emailVerification = {
-    otpHash,
-    otpExpiresAt: new Date(Date.now() + 10 * 60 * 1000),
-    otpAttempts: 0,
-    lastOtpSentAt: new Date(),
-  };
-
-  await user.save({ validateBeforeSave: false });
-
-  await emailService.sendOTPEmail({
-    to: user.email,
-    name: user.name,
-    otp,
-    expiresInMinutes: 10,
-  });
-
+export const verifyEmail = asyncHandler(async (_req: Request, res: Response) => {
   res.status(200).json({
     success: true,
-    message: 'A new verification code has been sent to your email.',
+    message: 'Email verification is disabled. You are fully verified.',
+  });
+});
+
+export const resendOTP = asyncHandler(async (_req: Request, res: Response) => {
+  res.status(200).json({
+    success: true,
+    message: 'Email verification is disabled. No verification code is required.',
   });
 });
 
 export const login = asyncHandler(async (req: Request, res: Response) => {
-  const { email, password } = req.body;
+  const { identifier, email, username, password } = req.body;
 
-  const user = await User.findOne({ email }).select('+password');
+  const loginId = (identifier || email || username || '').toLowerCase().trim();
+
+  if (!loginId) {
+    throw new AppError('Username or email is required', 400);
+  }
+
+  const user = await User.findOne({
+    $or: [{ email: loginId }, { username: loginId }],
+  }).select('+password');
 
   if (!user) {
     throw new AppError('Invalid credentials', 401);
@@ -367,10 +202,13 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        username: user.username,
+        mobileNumber: user.mobileNumber,
+        domains: user.domains,
         role: user.role,
         avatar: user.avatar,
-        isVerified: user.isVerified,
-        emailVerified: user.emailVerified,
+        isVerified: user.isVerified ?? true,
+        emailVerified: user.emailVerified ?? true,
         isActive: user.isActive,
         countryCode: user.countryCode,
         countryName: user.countryName,
@@ -406,10 +244,13 @@ export const getMe = asyncHandler(async (req: Request, res: Response) => {
         _id: user._id,
         name: user.name,
         email: user.email,
+        username: user.username,
+        mobileNumber: user.mobileNumber,
+        domains: user.domains,
         role: user.role,
         avatar: user.avatar,
-        isVerified: user.isVerified,
-        emailVerified: user.emailVerified,
+        isVerified: user.isVerified ?? true,
+        emailVerified: user.emailVerified ?? true,
         isActive: user.isActive,
         countryCode: user.countryCode,
         countryName: user.countryName,
@@ -442,6 +283,10 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
 
   const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
   const resetUrl = `${clientUrl}/reset-password?token=${resetToken}`;
+
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[DEV PASSWORD RESET] Reset URL for ${email}: ${resetUrl}`);
+  }
 
   try {
     await emailService.sendPasswordResetEmail({

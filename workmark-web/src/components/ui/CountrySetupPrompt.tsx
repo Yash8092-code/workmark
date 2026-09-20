@@ -39,7 +39,10 @@ export const CountrySetupPrompt: React.FC<CountrySetupPromptProps> = ({
   };
 
   return (
-    <div className={`relative overflow-hidden rounded-2xl border border-[#2563EB]/20 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-sky-50/80 p-6 md:p-8 shadow-sm ${className}`}>
+    <div
+      data-surface="light"
+      className={`surface-light relative overflow-hidden rounded-2xl border border-[#2563EB]/20 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-sky-50/80 p-6 md:p-8 shadow-sm ${className}`}
+    >
       {/* Decorative background glow */}
       <div className="absolute -top-16 -right-16 h-48 w-48 rounded-full bg-[#2563EB]/10 blur-3xl pointer-events-none" />
 

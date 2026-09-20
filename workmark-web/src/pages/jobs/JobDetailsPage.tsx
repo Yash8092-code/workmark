@@ -26,12 +26,16 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import toast from 'react-hot-toast';
 import { getCountryDisplayName, getCountryFlag } from '../../utils/countries';
+import { useMyApplications } from '../../hooks/useApplications';
+import { useProfile } from '../../hooks/useProfile';
 
 export const JobDetailsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user, isAuthenticated } = useAuth();
   const { data: job, isLoading } = useJob(id);
+  const { data: profile } = useProfile();
+  const { data: myAppsData } = useMyApplications({ limit: 100 });
   const applyMutation = useApply();
   const saveJobMutation = useSaveJob();
   const unsaveJobMutation = useUnsaveJob();
@@ -40,6 +44,11 @@ export const JobDetailsPage: React.FC = () => {
   const [coverLetter, setCoverLetter] = useState('');
   const [isApplying, setIsApplying] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  const existingApplication = myAppsData?.data?.find(
+    (app) => (typeof app.jobId === 'object' ? app.jobId?._id : app.jobId) === id
+  );
+  const hasApplied = Boolean(existingApplication);
 
   const handleApply = async () => {
     if (!isAuthenticated) {
@@ -56,7 +65,10 @@ export const JobDetailsPage: React.FC = () => {
     try {
       await applyMutation.mutateAsync({
         jobId: id!,
-        data: { coverLetter },
+        data: {
+          coverLetter,
+          resumeUrl: profile?.resumeUrl || profile?.resume,
+        },
       });
       setIsApplyModalOpen(false);
       setCoverLetter('');
@@ -89,8 +101,9 @@ export const JobDetailsPage: React.FC = () => {
   if (isLoading) {
     return (
       <PublicLayout>
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
           <Spinner size="lg" />
+          <p className="text-sm font-bold text-[#7E7C9A]">Loading job details...</p>
         </div>
       </PublicLayout>
     );
@@ -100,13 +113,13 @@ export const JobDetailsPage: React.FC = () => {
     return (
       <PublicLayout>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <div className="h-16 w-16 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center mx-auto mb-4">
+          <div className="h-16 w-16 rounded-2xl bg-[#EDE9FE] text-[#6C5CE7] flex items-center justify-center mx-auto mb-4">
             <Briefcase className="h-8 w-8" />
           </div>
-          <h1 className="text-2xl font-bold text-[#0F172A] mb-2">Job not found</h1>
-          <p className="text-sm text-[#64748B] mb-6">This listing may have expired or been removed by the employer.</p>
+          <h1 className="text-2xl font-black text-[#25243A] mb-2">Job not found</h1>
+          <p className="text-sm font-medium text-[#7E7C9A] mb-6">This listing may have expired or been removed by the employer.</p>
           <Link to="/jobs">
-            <Button className="rounded-xl">Browse Other Opportunities</Button>
+            <Button variant="primary">Browse Other Opportunities</Button>
           </Link>
         </div>
       </PublicLayout>
@@ -120,7 +133,7 @@ export const JobDetailsPage: React.FC = () => {
 
   const salaryMin = job.salaryMin ?? job.salary?.min;
   const salaryMax = job.salaryMax ?? job.salary?.max;
-  const salaryCurrency = job.salaryCurrency || job.salary?.currency || '$';
+  const salaryCurrency = job.salaryCurrency || job.salary?.currency || '₹';
 
   const countryDisplayName = getCountryDisplayName(job.country || job.countryCode);
   const countryFlag = getCountryFlag(job.country || job.countryCode);
@@ -144,23 +157,23 @@ export const JobDetailsPage: React.FC = () => {
 
   return (
     <PublicLayout>
-      <div className="bg-[#F8FAFC] min-h-screen py-8 sm:py-10 subtle-mesh">
+      <div className="min-h-screen py-8 sm:py-10 animate-fadeIn">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Content Column */}
             <div className="lg:col-span-2 space-y-6">
               {/* Main Card Header */}
-              <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-xs">
+              <div className="clay-card p-6 sm:p-8">
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6 mb-6">
                   <div className="flex items-start gap-4">
                     {companyLogo ? (
                       <img
                         src={companyLogo}
                         alt={companyName}
-                        className="h-16 w-16 rounded-2xl object-contain border border-[#F1F5F9] bg-white p-1.5 shadow-xs flex-shrink-0"
+                        className="h-16 w-16 rounded-2xl object-contain border border-[#E6E8F2] bg-white p-1.5 shadow-sm flex-shrink-0"
                       />
                     ) : (
-                      <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white font-bold flex items-center justify-center text-lg shadow-xs flex-shrink-0">
+                      <div className="h-16 w-16 rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#5146C7] text-white font-black flex items-center justify-center text-lg shadow-sm flex-shrink-0">
                         {companyName.substring(0, 2).toUpperCase() || <Building2 className="h-7 w-7" />}
                       </div>
                     )}
@@ -170,43 +183,43 @@ export const JobDetailsPage: React.FC = () => {
                         {companyData ? (
                           <Link
                             to={`/companies/${companyData._id}`}
-                            className="text-sm font-bold text-[#2563EB] hover:underline"
+                            className="text-sm font-black text-[#6C5CE7] hover:underline"
                           >
                             {companyName}
                           </Link>
                         ) : (
-                          <span className="text-sm font-bold text-[#64748B]">{companyName}</span>
+                          <span className="text-sm font-bold text-[#7E7C9A]">{companyName}</span>
                         )}
 
                         {isExternal ? (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFFBEB] text-[#B45309] border border-[#FDE68A]">
                             External Listing
                           </span>
                         ) : (
-                          <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 text-[#2563EB] border border-blue-200">
+                          <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#EDE9FE] text-[#6C5CE7] border border-[#DDD6FE]">
                             Workmark Verified
                           </span>
                         )}
                       </div>
 
-                      <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight mb-2">
+                      <h1 className="text-2xl sm:text-3xl font-black text-[#25243A] tracking-tight mb-2">
                         {job.title}
                       </h1>
 
                       {/* Location & Country Badge */}
-                      <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[#475569]">
-                        <span className="flex items-center gap-1.5 font-semibold text-[#0F172A]">
+                      <div className="flex flex-wrap items-center gap-3 text-xs sm:text-sm text-[#7E7C9A] font-semibold">
+                        <span className="flex items-center gap-1.5 text-[#25243A] font-bold">
                           <span className="text-base">{countryFlag}</span>
                           <span>{countryDisplayName}</span>
                           {job.location && job.location !== countryDisplayName && (
-                            <span className="font-normal text-[#64748B]">· {job.location}</span>
+                            <span className="font-medium text-[#7E7C9A]">· {job.location}</span>
                           )}
                         </span>
                         <span>•</span>
                         <span className="capitalize">{job.employmentType.replace('-', ' ')}</span>
                         <span>•</span>
-                        <span className="flex items-center text-[#64748B]">
-                          <Clock className="h-3.5 w-3.5 mr-1" />
+                        <span className="flex items-center text-[#7E7C9A]">
+                          <Clock className="h-3.5 w-3.5 mr-1 text-[#6C5CE7]" />
                           {job.createdAt
                             ? `Posted ${formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}`
                             : 'Recently posted'}
@@ -221,7 +234,7 @@ export const JobDetailsPage: React.FC = () => {
                       type="button"
                       onClick={handleShare}
                       title="Share job"
-                      className="p-2.5 rounded-xl border border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC] transition-colors cursor-pointer"
+                      className="p-2.5 rounded-2xl border border-white/10 bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800 transition-all cursor-pointer shadow-xs"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
@@ -229,43 +242,80 @@ export const JobDetailsPage: React.FC = () => {
                       type="button"
                       onClick={handleSaveToggle}
                       title={isSaved ? 'Unsave' : 'Save'}
-                      className={`p-2.5 rounded-xl border transition-colors cursor-pointer ${
+                      className={`p-2.5 rounded-2xl border transition-all cursor-pointer ${
                         isSaved
-                          ? 'bg-blue-50 border-blue-200 text-[#2563EB]'
-                          : 'border-[#E2E8F0] text-[#64748B] hover:text-[#0F172A] hover:bg-[#F8FAFC]'
+                          ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300 shadow-sm'
+                          : 'border-white/10 bg-slate-900/80 text-slate-300 hover:text-white hover:bg-slate-800'
                       }`}
                     >
-                      {isSaved ? <BookmarkCheck className="h-4 w-4 fill-current text-[#2563EB]" /> : <Bookmark className="h-4 w-4" />}
+                      {isSaved ? <BookmarkCheck className="h-4 w-4 fill-current text-indigo-400" /> : <Bookmark className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>
 
                 {/* Tags Row */}
-                <div className="flex flex-wrap items-center gap-2 pb-6 border-b border-[#F1F5F9]">
-                  <Badge variant={job.workMode === 'remote' ? 'success' : job.workMode === 'hybrid' ? 'info' : 'default'}>
+                <div className="flex flex-wrap items-center gap-2 pb-6 border-b border-[#E6E8F2]">
+                  <Badge variant={job.workMode === 'remote' ? 'success' : job.workMode === 'hybrid' ? 'primary' : 'default'}>
                     {job.workMode.charAt(0).toUpperCase() + job.workMode.slice(1)}
                   </Badge>
-                  <Badge>{job.category}</Badge>
-                  <Badge>{job.experienceLevel.charAt(0).toUpperCase() + job.experienceLevel.slice(1)} Level</Badge>
+                  <Badge variant="primary">{job.category}</Badge>
+                  <Badge variant="default">{job.experienceLevel.charAt(0).toUpperCase() + job.experienceLevel.slice(1)} Level</Badge>
                 </div>
 
                 {/* Salary Display */}
                 {formattedSalary && (
                   <div className="py-4">
-                    <p className="text-xs font-bold uppercase tracking-wider text-[#64748B] mb-1">Offered Compensation</p>
-                    <p className="text-2xl font-black text-emerald-700 tracking-tight">
+                    <p className="text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-1">Offered Compensation</p>
+                    <p className="text-2xl font-black text-[#059669] tracking-tight">
                       {formattedSalary}
                     </p>
                   </div>
                 )}
 
-                {/* Primary CTA Buttons */}
-                <div className="pt-4 flex flex-col sm:flex-row gap-3">
-                  {isExternal ? (
+                {/* Primary CTA Buttons or Status Banner */}
+                <div className="pt-4">
+                  {hasApplied ? (
+                    <div className="p-4 bg-[#EDE9FE]/50 rounded-2xl border border-[#DDD6FE] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <div className="flex items-center gap-2 mb-1">
+                          <CheckCircle2 className="h-5 w-5 text-[#35C98A] shrink-0" />
+                          <span className="font-black text-sm text-[#25243A]">Application Submitted</span>
+                          <span className={`px-2.5 py-0.5 rounded-full text-xs font-black uppercase ${
+                            existingApplication?.status === 'accepted'
+                              ? 'bg-[#ECFDF5] text-[#059669]'
+                              : existingApplication?.status === 'interview'
+                              ? 'bg-[#EDE9FE] text-[#6C5CE7]'
+                              : existingApplication?.status === 'shortlisted'
+                              ? 'bg-[#EFF6FF] text-[#2563EB]'
+                              : existingApplication?.status === 'rejected'
+                              ? 'bg-[#FFF1F2] text-[#E11D48]'
+                              : 'bg-[#FFF7ED] text-[#EA580C]'
+                          }`}>
+                            {existingApplication?.status === 'pending'
+                              ? 'Applied / Pending'
+                              : existingApplication?.status === 'reviewed'
+                              ? 'Under Review'
+                              : existingApplication?.status === 'accepted'
+                              ? 'Accepted / Offer'
+                              : existingApplication?.status?.replace('_', ' ')}
+                          </span>
+                        </div>
+                        <p className="text-xs font-medium text-[#7E7C9A]">
+                          Your profile is active in this recruitment pipeline.
+                        </p>
+                      </div>
+                      <Link to={`/seeker/applications?applicationId=${existingApplication?._id}`}>
+                        <Button variant="primary" size="sm" className="shrink-0">
+                          View in Applications →
+                        </Button>
+                      </Link>
+                    </div>
+                  ) : isExternal ? (
                     <Button
                       size="lg"
+                      variant="primary"
                       onClick={() => job.externalUrl && window.open(job.externalUrl, '_blank', 'noopener,noreferrer')}
-                      className="flex-1 justify-center rounded-xl font-bold py-3.5 shadow-lg shadow-[#0F172A]/10 bg-[#0F172A] hover:bg-[#1E293B]"
+                      className="w-full justify-center shadow-lg"
                     >
                       <span>Apply on Company Site</span>
                       <ExternalLink className="h-4 w-4 ml-2" />
@@ -273,8 +323,9 @@ export const JobDetailsPage: React.FC = () => {
                   ) : (
                     <Button
                       size="lg"
+                      variant="primary"
                       onClick={() => setIsApplyModalOpen(true)}
-                      className="flex-1 justify-center rounded-xl font-bold py-3.5 shadow-lg shadow-[#2563EB]/25"
+                      className="w-full justify-center shadow-lg"
                     >
                       <span>Apply with Workmark</span>
                     </Button>
@@ -282,66 +333,178 @@ export const JobDetailsPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Why this job fits you (Personalized Fit Signals) */}
-              <div className="bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white border border-blue-100 rounded-3xl p-6 sm:p-7 shadow-xs">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="p-1.5 rounded-lg bg-blue-600 text-white shadow-xs">
-                    <Sparkles className="h-4 w-4" />
-                  </span>
-                  <h2 className="text-base font-bold text-[#0F172A]">Why this may fit you</h2>
-                  {job.matchScore && (
-                    <span className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black bg-blue-600 text-white shadow-xs">
-                      <Zap className="h-3 w-3 fill-current text-yellow-300" />
-                      <span>{job.matchScore}% Match</span>
-                    </span>
-                  )}
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
-                  {user?.countryCode && (job.country || job.countryCode) && user.countryCode.toLowerCase() === (job.country || job.countryCode)?.toLowerCase() && (
-                    <div className="flex items-start gap-2 text-xs font-medium text-[#1E293B] bg-white/80 p-3 rounded-2xl border border-blue-100">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Matches your target location preference ({countryDisplayName})</span>
+              {/* Opportunity Intelligence Section */}
+              {job.opportunityIntelligence ? (
+                <div className="clay-card-dark p-6 sm:p-8 relative overflow-hidden space-y-6">
+                  {/* Intel Header */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
+                    <div>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-black uppercase tracking-wider text-[#8ED8FF] flex items-center gap-1">
+                          <Sparkles className="h-3.5 w-3.5 text-[#FFB84D]" />
+                          Opportunity Intelligence
+                        </span>
+                        <span className="text-[11px] font-bold text-white/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/15">
+                          {job.opportunityIntelligence.matchConfidence}
+                        </span>
+                      </div>
+                      <h2 className="text-xl font-black tracking-tight text-white">
+                        Personalized Fit Assessment
+                      </h2>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-black ${
+                          job.opportunityIntelligence.matchTier === 'Strong Match'
+                            ? 'bg-[#35C98A]/20 text-[#35C98A] border border-[#35C98A]/30'
+                            : job.opportunityIntelligence.matchTier === 'Good Match'
+                            ? 'bg-[#8ED8FF]/20 text-[#8ED8FF] border border-[#8ED8FF]/30'
+                            : 'bg-[#FFB84D]/20 text-[#FFB84D] border border-[#FFB84D]/30'
+                        }`}>
+                          {job.opportunityIntelligence.matchTier}
+                        </span>
+                        {job.opportunityIntelligence.tags.map((tag, idx) => (
+                          <span key={idx} className="px-2 py-0.5 rounded-full text-[11px] font-bold bg-white/10 text-white/90 border border-white/15">
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
                     </div>
-                  )}
 
-                  {job.workMode === 'remote' && (
-                    <div className="flex items-start gap-2 text-xs font-medium text-[#1E293B] bg-white/80 p-3 rounded-2xl border border-blue-100">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>Remote availability matches flexible work mode preference</span>
+                    <div className="flex sm:flex-col items-center justify-center p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/15 shrink-0 text-center">
+                      <span className="text-3xl sm:text-4xl font-black text-white flex items-center">
+                        {job.opportunityIntelligence.score}
+                        <span className="text-lg text-[#8ED8FF] font-black ml-0.5">%</span>
+                      </span>
+                      <span className="text-[11px] uppercase tracking-wider font-bold text-white/80 sm:mt-0.5">
+                        Match Score
+                      </span>
                     </div>
-                  )}
-
-                  <div className="flex items-start gap-2 text-xs font-medium text-[#1E293B] bg-white/80 p-3 rounded-2xl border border-blue-100">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                    <span>In-demand domain: {job.category} ({job.experienceLevel} level)</span>
                   </div>
 
-                  {job.skills && job.skills.length > 0 && (
-                    <div className="flex items-start gap-2 text-xs font-medium text-[#1E293B] bg-white/80 p-3 rounded-2xl border border-blue-100">
-                      <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
-                      <span>{job.skills.length} core technical requirements identified</span>
+                  {/* Should You Apply? Guidance Card */}
+                  <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10 text-white">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2.5 rounded-2xl bg-[#6C5CE7]/30 text-[#8ED8FF] shrink-0 mt-0.5">
+                        <Zap className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <span className="text-[11px] font-black uppercase tracking-wider text-[#8ED8FF] block">
+                          Application Guidance
+                        </span>
+                        <h3 className="text-sm font-black text-white mt-0.5">
+                          {job.opportunityIntelligence.applicationGuidance.headline}
+                        </h3>
+                        <p className="text-xs font-medium text-white/80 mt-1 leading-relaxed">
+                          {job.opportunityIntelligence.applicationGuidance.summary}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Verified Fit Signals */}
+                  {job.opportunityIntelligence.fitSignals.length > 0 && (
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-black uppercase tracking-wider text-white/80 flex items-center gap-1.5">
+                        <CheckCircle2 className="h-4 w-4 text-[#35C98A]" />
+                        <span>Why This Job Fits Your Profile</span>
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {job.opportunityIntelligence.fitSignals.map((signal, idx) => (
+                          <div key={idx} className="flex items-start gap-2 p-3 rounded-xl bg-white/5 border border-white/10 text-xs text-white/90 font-medium">
+                            <span className="h-1.5 w-1.5 rounded-full bg-[#35C98A] mt-1.5 shrink-0" />
+                            <span>{signal}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
+
+                  {/* Matched vs Missing Skills Split */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-2xl bg-[#065F46]/30 border border-[#35C98A]/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-[#35C98A]">Matching Profile Skills</span>
+                        <span className="text-[11px] font-black text-[#35C98A]">
+                          {job.opportunityIntelligence.matchingSkills.length} Verified
+                        </span>
+                      </div>
+                      {job.opportunityIntelligence.matchingSkills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {job.opportunityIntelligence.matchingSkills.map((skill, idx) => (
+                            <span key={idx} className="px-2.5 py-1 bg-[#065F46]/60 text-[#A7F3D0] text-xs font-bold rounded-lg border border-[#35C98A]/40">
+                              ✓ {skill}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#A7F3D0]/70 italic">No exact skill matches detected in profile.</p>
+                      )}
+                    </div>
+
+                    <div className="p-4 rounded-2xl bg-[#5146C7]/30 border border-[#6C5CE7]/30">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-xs font-black text-[#8ED8FF]">Target Growth Skills</span>
+                        <span className="text-[11px] font-black text-[#8ED8FF]">
+                          {job.opportunityIntelligence.missingSkills.length} Requested
+                        </span>
+                      </div>
+                      {job.opportunityIntelligence.missingSkills.length > 0 ? (
+                        <div className="flex flex-wrap gap-1.5">
+                          {job.opportunityIntelligence.missingSkills.map((skill, idx) => (
+                            <span key={idx} className="px-2.5 py-1 bg-[#5146C7]/60 text-[#EDE9FE] text-xs font-bold rounded-lg border border-[#6C5CE7]/40">
+                              + {skill}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-xs text-[#EDE9FE]/70 italic">You possess all core technical requirements!</p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
+              ) : (
+                /* Fallback signals when not authenticated */
+                <div className="clay-card-soft p-6 sm:p-7">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="p-1.5 rounded-xl bg-[#EDE9FE] text-[#6C5CE7]">
+                      <Sparkles className="h-4 w-4" />
+                    </span>
+                    <h2 className="text-base font-black text-[#25243A]">Opportunity Overview</h2>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                    <div className="flex items-start gap-2 text-xs font-bold text-white bg-slate-900/80 p-3 rounded-2xl border border-white/10">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>{job.workMode.toUpperCase()} position located in {countryDisplayName}</span>
+                    </div>
+                    <div className="flex items-start gap-2 text-xs font-bold text-white bg-slate-900/80 p-3 rounded-2xl border border-white/10">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0 mt-0.5" />
+                      <span>Domain: {job.category} ({job.experienceLevel} level)</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-white/10 text-xs font-semibold text-slate-400 flex items-center justify-between">
+                    <span>Sign in with a job seeker profile to unlock personalized fit intelligence</span>
+                    <Link to="/login" className="font-black text-cyan-400 hover:underline">
+                      Sign In &rarr;
+                    </Link>
+                  </div>
+                </div>
+              )}
 
               {/* Job Description */}
-              <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-xs">
-                <h2 className="text-lg font-bold text-[#0F172A] mb-4">About the Role</h2>
-                <div className="prose max-w-none text-[#475569] leading-relaxed text-sm">
-                  <p className="whitespace-pre-line">{job.description}</p>
+              <div className="clay-card p-6 sm:p-8">
+                <h2 className="text-lg font-black text-[#25243A] mb-4">About the Role</h2>
+                <div className="text-[#25243A] font-medium leading-relaxed text-sm whitespace-pre-line">
+                  {job.description}
                 </div>
               </div>
 
               {/* Responsibilities */}
               {job.responsibilities && job.responsibilities.length > 0 && (
-                <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-xs">
-                  <h2 className="text-lg font-bold text-[#0F172A] mb-4">Key Responsibilities</h2>
-                  <ul className="space-y-2 text-sm text-[#475569]">
+                <div className="clay-card p-6 sm:p-8">
+                  <h2 className="text-lg font-black text-[#25243A] mb-4">Key Responsibilities</h2>
+                  <ul className="space-y-2.5 text-sm font-medium text-[#25243A]">
                     {job.responsibilities.map((item, index) => (
-                      <li key={index} className="flex items-start gap-2">
-                        <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] mt-2 flex-shrink-0" />
+                      <li key={index} className="flex items-start gap-2.5">
+                        <span className="h-2 w-2 rounded-full bg-[#6C5CE7] mt-2 flex-shrink-0" />
                         <span>{item}</span>
                       </li>
                     ))}
@@ -351,23 +514,13 @@ export const JobDetailsPage: React.FC = () => {
 
               {/* Requirements & Skills */}
               {job.skills && job.skills.length > 0 && (
-                <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 sm:p-8 shadow-xs">
-                  <div className="flex items-center justify-between gap-2 mb-4">
-                    <h2 className="text-lg font-bold text-[#0F172A]">Target Skills & Qualifications</h2>
-                    {isExternal && (
-                      <span className="text-[11px] font-medium text-[#64748B] bg-[#F1F5F9] px-2.5 py-1 rounded-lg">
-                        Skills detected from job description
-                      </span>
-                    )}
-                  </div>
+                <div className="clay-card p-6 sm:p-8">
+                  <h2 className="text-lg font-black text-[#25243A] mb-4">Target Skills & Qualifications</h2>
                   <div className="flex flex-wrap gap-2">
                     {job.skills.map((skill, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1.5 bg-[#F8FAFC] text-[#0F172A] text-xs font-semibold rounded-xl border border-[#E2E8F0]"
-                      >
+                      <Badge key={index} variant="primary" className="py-1 px-3 text-xs">
                         {skill}
-                      </span>
+                      </Badge>
                     ))}
                   </div>
                 </div>
@@ -377,38 +530,38 @@ export const JobDetailsPage: React.FC = () => {
             {/* Sidebar Column */}
             <div className="space-y-6">
               {/* Job Overview Card */}
-              <div className="bg-white border border-[#E2E8F0] rounded-3xl p-6 shadow-xs space-y-4">
-                <h3 className="font-bold text-[#0F172A] text-base pb-3 border-b border-[#F1F5F9]">
+              <div className="clay-card p-6 space-y-4">
+                <h3 className="font-black text-[#25243A] text-base pb-3 border-b border-[#E6E8F2]">
                   Position Snapshot
                 </h3>
 
                 <div className="space-y-3.5 text-xs sm:text-sm">
                   <div>
-                    <span className="text-[#64748B] block text-xs mb-0.5">Location & Country</span>
-                    <span className="font-semibold text-[#0F172A] flex items-center gap-1.5">
+                    <span className="text-[#7E7C9A] font-bold block text-xs mb-0.5">Location & Country</span>
+                    <span className="font-black text-[#25243A] flex items-center gap-1.5">
                       <span>{countryFlag}</span>
                       <span>{countryDisplayName}</span>
                     </span>
                   </div>
 
                   <div>
-                    <span className="text-[#64748B] block text-xs mb-0.5">Work Mode</span>
-                    <span className="font-semibold text-[#0F172A] capitalize">{job.workMode}</span>
+                    <span className="text-[#7E7C9A] font-bold block text-xs mb-0.5">Work Mode</span>
+                    <span className="font-black text-[#25243A] capitalize">{job.workMode}</span>
                   </div>
 
                   <div>
-                    <span className="text-[#64748B] block text-xs mb-0.5">Employment Type</span>
-                    <span className="font-semibold text-[#0F172A] capitalize">{job.employmentType.replace('-', ' ')}</span>
+                    <span className="text-[#7E7C9A] font-bold block text-xs mb-0.5">Employment Type</span>
+                    <span className="font-black text-[#25243A] capitalize">{job.employmentType.replace('-', ' ')}</span>
                   </div>
 
                   <div>
-                    <span className="text-[#64748B] block text-xs mb-0.5">Experience Level</span>
-                    <span className="font-semibold text-[#0F172A] capitalize">{job.experienceLevel} Level</span>
+                    <span className="text-[#7E7C9A] font-bold block text-xs mb-0.5">Experience Level</span>
+                    <span className="font-black text-[#25243A] capitalize">{job.experienceLevel} Level</span>
                   </div>
 
                   <div>
-                    <span className="text-[#64748B] block text-xs mb-0.5">Source</span>
-                    <span className="font-semibold text-[#0F172A]">{isExternal ? 'External Aggregator (Adzuna)' : 'Workmark Direct'}</span>
+                    <span className="text-[#7E7C9A] font-bold block text-xs mb-0.5">Source</span>
+                    <span className="font-black text-[#25243A]">{isExternal ? 'External Aggregator (Adzuna)' : 'Workmark Direct'}</span>
                   </div>
                 </div>
               </div>
@@ -428,8 +581,8 @@ export const JobDetailsPage: React.FC = () => {
         size="lg"
       >
         <div className="space-y-4">
-          <p className="text-sm text-[#64748B]">
-            You're submitting your Workmark profile for <strong>{job.title}</strong> at <strong>{companyName}</strong>.
+          <p className="text-sm font-medium text-[#7E7C9A]">
+            You're submitting your Workmark profile for <strong className="text-[#25243A]">{job.title}</strong> at <strong className="text-[#25243A]">{companyName}</strong>.
           </p>
 
           <Textarea
@@ -441,10 +594,10 @@ export const JobDetailsPage: React.FC = () => {
           />
 
           <div className="flex justify-end gap-3 pt-2">
-            <Button variant="outline" onClick={() => setIsApplyModalOpen(false)} className="rounded-xl">
+            <Button variant="ghost" onClick={() => setIsApplyModalOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleApply} loading={isApplying} className="rounded-xl font-bold shadow-md shadow-[#2563EB]/20">
+            <Button variant="primary" onClick={handleApply} loading={isApplying}>
               Submit Application
             </Button>
           </div>

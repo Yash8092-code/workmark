@@ -3,10 +3,23 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import Application from '../models/Application';
 import Job from '../models/Job';
+import Profile from '../models/Profile';
 import Notification from '../models/Notification';
 import User from '../models/User';
 import { paginate } from '../utils/helpers';
 import emailService from '../services/email.service';
+import { calculateOpportunityIntelligence } from '../services/opportunity.service';
+import { ApplicationStatus } from '../types';
+
+// Legal recruitment state transitions
+const ALLOWED_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
+  pending: ['reviewed', 'rejected'],
+  reviewed: ['shortlisted', 'rejected'],
+  shortlisted: ['interview', 'accepted', 'rejected'],
+  interview: ['interview', 'accepted', 'shortlisted', 'rejected'],
+  accepted: [],
+  rejected: [],
+};
 
 export const applyToJob = asyncHandler(async (req: Request, res: Response) => {
   if (req.user?.role !== 'job_seeker') {
@@ -14,9 +27,10 @@ export const applyToJob = asyncHandler(async (req: Request, res: Response) => {
   }
 
   const { jobId } = req.params;
-  const { coverLetter, resumeUrl } = req.body;
+  const { coverLetter } = req.body;
+  let { resumeUrl } = req.body;
 
-  const job = await Job.findById(jobId);
+  const job = await Job.findById(jobId).populate('companyId');
 
   if (!job) {
     throw new AppError('Job not found', 404);
@@ -43,21 +57,39 @@ export const applyToJob = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('You have already applied to this job', 400);
   }
 
+  // If no resume URL was provided in request, fallback to seeker's profile resume
+  if (!resumeUrl) {
+    const seekerProfile = await Profile.findOne({ userId: req.user._id });
+    resumeUrl = seekerProfile?.resumeUrl;
+  }
+
+  const now = new Date();
   const application = await Application.create({
     jobId,
     applicantId: req.user._id,
     employerId: job.employerId,
     coverLetter,
     resumeUrl,
-    statusHistory: [{ status: 'pending', changedAt: new Date() }],
+    status: 'pending',
+    isViewedByEmployer: false,
+    appliedAt: now,
+    statusHistory: [
+      {
+        status: 'pending',
+        changedAt: now,
+        note: 'Application submitted',
+        changedBy: req.user._id,
+      },
+    ],
   });
 
+  // Notify the employer with direct deep-link to candidate application
   await Notification.create({
     userId: job.employerId,
     type: 'application',
     title: 'New Job Application',
-    message: `${req.user.name} applied to your job: ${job.title}`,
-    link: `/employer/applications/${application._id}`,
+    message: `${req.user.name} applied to your opportunity: ${job.title}`,
+    link: `/employer/applicants/${application._id}`,
   });
 
   res.status(201).json({
@@ -131,16 +163,28 @@ export const getJobApplications = asyncHandler(async (req: Request, res: Respons
     { createdAt: -1 }
   );
 
-  for (const application of result.data) {
-    await application.populate({
-      path: 'applicantId',
-      populate: { path: 'profile' },
+  const enhancedData = [];
+  for (const app of result.data) {
+    const applicantUser = app.applicantId as any;
+    const applicantProfile = applicantUser?._id ? await Profile.findOne({ userId: applicantUser._id }) : null;
+
+    let candidateScore: number | undefined = undefined;
+    if (job && applicantProfile && applicantUser) {
+      const intel = calculateOpportunityIntelligence(job.toObject(), applicantUser, applicantProfile);
+      candidateScore = intel.score;
+    }
+
+    const appObj = app.toObject ? app.toObject() : { ...app };
+    enhancedData.push({
+      ...appObj,
+      profile: applicantProfile,
+      matchScore: candidateScore,
     });
   }
 
   res.status(200).json({
     success: true,
-    data: result.data,
+    data: enhancedData,
     pagination: result.pagination,
   });
 });
@@ -149,24 +193,50 @@ export const getApplication = asyncHandler(async (req: Request, res: Response) =
   const { id } = req.params;
 
   const application = await Application.findById(id)
-    .populate('applicantId', 'name email avatar')
-    .populate('jobId')
+    .populate('applicantId', 'name email avatar phone countryCode countryName createdAt')
+    .populate({
+      path: 'jobId',
+      populate: { path: 'companyId' },
+    })
     .populate('employerId', 'name email');
 
   if (!application) {
     throw new AppError('Application not found', 404);
   }
 
-  if (
-    application.applicantId._id.toString() !== req.user?._id.toString() &&
-    application.employerId._id.toString() !== req.user?._id.toString()
-  ) {
+  const isApplicant = application.applicantId._id.toString() === req.user?._id.toString();
+  const isEmployer = application.employerId._id.toString() === req.user?._id.toString();
+
+  if (!isApplicant && !isEmployer) {
     throw new AppError('Not authorized to view this application', 403);
+  }
+
+  // If employer opened application, mark isViewedByEmployer = true
+  if (isEmployer && !application.isViewedByEmployer) {
+    application.isViewedByEmployer = true;
+    await application.save();
+  }
+
+  // Fetch applicant's full profile
+  const applicantProfile = await Profile.findOne({ userId: application.applicantId._id });
+
+  // Calculate match score against this job
+  let matchScore: number | undefined = undefined;
+  let opportunityIntelligence: any = undefined;
+  if (application.jobId && applicantProfile) {
+    const rawJob = typeof (application.jobId as any).toObject === 'function' ? (application.jobId as any).toObject() : application.jobId;
+    opportunityIntelligence = calculateOpportunityIntelligence(rawJob, application.applicantId, applicantProfile);
+    matchScore = opportunityIntelligence.score;
   }
 
   res.status(200).json({
     success: true,
-    data: { application },
+    data: {
+      application,
+      profile: applicantProfile,
+      matchScore,
+      opportunityIntelligence,
+    },
   });
 });
 
@@ -176,7 +246,17 @@ export const updateApplicationStatus = asyncHandler(async (req: Request, res: Re
   }
 
   const { id } = req.params;
-  const { status } = req.body;
+  const {
+    status,
+    note,
+    interviewAction,
+    interviewDate,
+    interviewTime,
+    interviewMode,
+    interviewLocation,
+    interviewMessage,
+    cancelledReason,
+  } = req.body;
 
   const application = await Application.findById(id);
 
@@ -188,39 +268,134 @@ export const updateApplicationStatus = asyncHandler(async (req: Request, res: Re
     throw new AppError('Not authorized to update this application', 403);
   }
 
-  application.status = status;
-  application.statusHistory.push({ status, changedAt: new Date() });
+  const currentStatus = application.status as ApplicationStatus;
+  let targetStatus = (status || currentStatus) as ApplicationStatus;
+
+  // Handle Interview Cancellation action: reverts to shortlisted
+  if (interviewAction === 'cancel') {
+    targetStatus = 'shortlisted';
+  }
+
+  // State Machine Validation
+  const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
+  const isReschedule = currentStatus === 'interview' && (interviewAction === 'reschedule' || targetStatus === 'interview');
+
+  if (currentStatus !== targetStatus && !allowed.includes(targetStatus)) {
+    throw new AppError(
+      `Invalid status transition from "${currentStatus}" to "${targetStatus}".`,
+      400
+    );
+  }
+
+  const now = new Date();
+  application.status = targetStatus;
+
+  // Update stage-specific timestamp
+  if (targetStatus === 'reviewed' && !application.reviewedAt) application.reviewedAt = now;
+  if (targetStatus === 'shortlisted' && !application.shortlistedAt) application.shortlistedAt = now;
+  if (targetStatus === 'interview') application.interviewAt = now;
+  if (targetStatus === 'accepted') application.acceptedAt = now;
+  if (targetStatus === 'rejected') application.rejectedAt = now;
+
+  // Handle interview metadata
+  if (targetStatus === 'interview' || interviewAction === 'schedule' || interviewAction === 'reschedule') {
+    application.interview = {
+      status: interviewAction === 'reschedule' ? 'rescheduled' : 'scheduled',
+      scheduledAt: now,
+      date: interviewDate || application.interview?.date,
+      time: interviewTime || application.interview?.time,
+      mode: interviewMode || application.interview?.mode || 'video',
+      locationOrLink: interviewLocation || application.interview?.locationOrLink,
+      message: interviewMessage || application.interview?.message,
+    };
+  } else if (interviewAction === 'cancel') {
+    application.interview = {
+      ...application.interview,
+      status: 'cancelled',
+      cancelledReason: cancelledReason || note || 'Cancelled by employer',
+    };
+  }
+
+  // Append to status history
+  let historyNote = note;
+  if (!historyNote) {
+    if (interviewAction === 'schedule') historyNote = `Interview scheduled for ${interviewDate} ${interviewTime}`;
+    else if (interviewAction === 'reschedule') historyNote = `Interview rescheduled to ${interviewDate} ${interviewTime}`;
+    else if (interviewAction === 'cancel') historyNote = `Interview cancelled: ${cancelledReason || 'No reason provided'}`;
+    else historyNote = `Status changed to ${targetStatus}`;
+  }
+
+  application.statusHistory.push({
+    status: targetStatus,
+    changedAt: now,
+    note: historyNote,
+    changedBy: req.user._id,
+  });
+
   await application.save();
+
+  // Populate job details for notification and email
+  const job = await Job.findById(application.jobId).populate('companyId');
+  const jobTitle = job?.title || 'Job Opening';
+  const companyName = (job?.companyId as any)?.name || job?.companyName || 'Employer';
+
+  // Construct context-rich seeker notification with deep-link
+  let notifTitle = 'Application Status Updated';
+  let notifMessage = `Your application for "${jobTitle}" has been updated to: ${targetStatus}.`;
+
+  if (targetStatus === 'reviewed') {
+    notifTitle = 'Application Under Review';
+    notifMessage = `Your application for "${jobTitle}" at ${companyName} is now under review.`;
+  } else if (targetStatus === 'shortlisted') {
+    if (interviewAction === 'cancel') {
+      notifTitle = 'Interview Cancelled';
+      notifMessage = `The scheduled interview for "${jobTitle}" was cancelled. Your application remains shortlisted.`;
+    } else {
+      notifTitle = 'Application Shortlisted!';
+      notifMessage = `Congratulations! You have been shortlisted for "${jobTitle}" at ${companyName}.`;
+    }
+  } else if (targetStatus === 'interview') {
+    if (interviewAction === 'reschedule') {
+      notifTitle = 'Interview Rescheduled';
+      notifMessage = `Your interview for "${jobTitle}" has been rescheduled to ${interviewDate || 'the requested time'}.`;
+    } else {
+      notifTitle = 'Interview Requested';
+      notifMessage = `You have been invited for an interview for "${jobTitle}" at ${companyName} on ${interviewDate || ''} ${interviewTime || ''}.`;
+    }
+  } else if (targetStatus === 'accepted') {
+    notifTitle = 'Application Accepted / Offer!';
+    notifMessage = `Congratulations! Your application for "${jobTitle}" at ${companyName} has been accepted.`;
+  } else if (targetStatus === 'rejected') {
+    notifTitle = 'Application Update';
+    notifMessage = `Your application for "${jobTitle}" was not selected to move forward at this time.`;
+  }
 
   await Notification.create({
     userId: application.applicantId,
     type: 'application_status',
-    title: 'Application Status Updated',
-    message: `Your application status has been updated to: ${status}`,
-    link: `/seeker/applications`,
+    title: notifTitle,
+    message: notifMessage,
+    link: `/seeker/applications?applicationId=${application._id}`,
   });
 
-  // Send application status email if applicant has enabled email notifications
+  // Send status email if enabled
   try {
     const applicant = await User.findById(application.applicantId);
-    const job = await Job.findById(application.jobId).populate('companyId');
-
-    if (applicant && applicant.email && (applicant.emailNotifications?.applicationUpdates !== false)) {
-      const companyName = (job?.companyId as any)?.name || job?.companyName || 'Company';
+    if (applicant && applicant.email && applicant.emailNotifications?.applicationUpdates !== false) {
       const clientUrl = process.env.CLIENT_URL || process.env.FRONTEND_URL || 'http://localhost:5173';
-      const applicationUrl = `${clientUrl}/seeker/applications`;
+      const applicationUrl = `${clientUrl}/seeker/applications?applicationId=${application._id}`;
 
       await emailService.sendApplicationStatusEmail({
         to: applicant.email,
         name: applicant.name,
-        jobTitle: job?.title || 'Job Opening',
+        jobTitle,
         companyName,
-        status,
+        status: targetStatus,
         applicationUrl,
       });
     }
   } catch (emailErr) {
-    console.error('[EMAIL] Failed to send application status email:', emailErr);
+    console.error('[EMAIL] Failed to send status email:', emailErr);
   }
 
   res.status(200).json({

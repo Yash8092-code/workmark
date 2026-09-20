@@ -1,132 +1,836 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=Outfit:wght@400;500;600;700;800;900&display=swap');
 @import "tailwindcss";
 
 @layer base {
   :root {
     --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --font-heading: 'Outfit', sans-serif;
-    --primary-blue: #2563EB;
-    --midnight-navy: #0F172A;
-    --surface-cool: #F8FAFC;
-    --surface-card: #FFFFFF;
+
+    /* Deep Cyber Dark Palette */
+    --genz-bg: #030712;
+    --genz-bg-subtle: #080D1A;
+    --genz-surface: #0E1626;
+    --genz-surface-glass: rgba(14, 22, 38, 0.75);
+    --genz-border: rgba(255, 255, 255, 0.08);
+    --genz-border-glow: rgba(56, 189, 248, 0.35);
+
+    /* Electric Accents */
+    --genz-blue: #327CF6;
+    --genz-cyan: #38BDF8;
+    --genz-indigo: #6366F1;
+    --genz-violet: #8B5CF6;
+    --genz-emerald: #10B981;
+    --genz-orange: #F97316;
+    --genz-coral: #FF5757;
+
+    /* Semantic Surface & Text Tokens */
+    --surface-bg: #0E1626;
+    --surface-bg-elevated: #131A2A;
+    --surface-border: rgba(255, 255, 255, 0.08);
+    --surface-border-subtle: rgba(255, 255, 255, 0.04);
+
+    --text-primary: #F8FAFC;
+    --text-secondary: #CBD5E1;
+    --text-muted: #94A3B8;
+    --text-on-dark: #F8FAFC;
+    --text-on-light: #0F172A;
+
+    --input-bg: rgba(14, 20, 32, 0.85);
+    --input-text: #F8FAFC;
+    --input-placeholder: #64748B;
+    --input-border: rgba(255, 255, 255, 0.12);
+
+    /* Legacy compatibility aliases */
+    --genz-text-primary: #F8FAFC;
+    --genz-text-secondary: #CBD5E1;
+    --genz-text-muted: #94A3B8;
   }
 
   body {
     font-family: var(--font-sans);
-    color: #0F172A;
-    background-color: #F8FAFC;
+    color: var(--genz-text-primary);
+    background-color: #030712;
+    /* Grid background inspired by deepak2k03.qzz.io */
+    background-image: 
+      linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+    background-size: 40px 40px;
+    background-attachment: fixed;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-heading);
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
+    color: var(--genz-text-primary);
   }
 
-  /* Accessible focus states */
+  /* Accessible focus states with electric blue */
   *:focus-visible {
-    outline: 2px solid #2563EB;
+    outline: 2px solid var(--genz-cyan);
     outline-offset: 2px;
   }
 }
 
-/* Glassmorphism utilities */
-.glass-nav {
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid rgba(226, 232, 240, 0.85);
+/* ==========================================================
+   GEN-Z & TAKE-U-FORWARD GLASSMORPHIC SURFACES
+   ========================================================== */
+
+/* Gen-Z Standard Glass Card */
+.genz-card,
+.clay-card {
+  background: linear-gradient(180deg, rgba(19, 26, 42, 0.8) 0%, rgba(13, 18, 30, 0.85) 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 10px 30px -10px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.glass-card {
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(226, 232, 240, 0.85);
+.genz-card:hover,
+.clay-card:hover {
+  border-color: rgba(56, 189, 248, 0.25);
+  box-shadow:
+    0 14px 36px -8px rgba(0, 0, 0, 0.7),
+    0 0 24px -4px rgba(50, 124, 246, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.glass-card-dark {
-  background: rgba(15, 23, 42, 0.8);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+/* Raised Glass Card */
+.genz-card-raised,
+.clay-card-raised {
+  background: linear-gradient(180deg, rgba(24, 33, 54, 0.85) 0%, rgba(15, 22, 38, 0.9) 100%);
+  border-radius: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  box-shadow:
+    0 20px 45px -12px rgba(0, 0, 0, 0.75),
+    0 0 30px -6px rgba(56, 189, 248, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  color: #F8FAFC;
+}
+
+/* Inset / Tray Card */
+.genz-card-inset,
+.clay-card-inset {
+  background: rgba(10, 14, 24, 0.7);
+  border-radius: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.4);
+  color: #F8FAFC;
+}
+
+/* Soft Tinted Card */
+.genz-card-soft,
+.clay-card-soft {
+  background: linear-gradient(145deg, rgba(20, 28, 48, 0.8) 0%, rgba(13, 17, 28, 0.8) 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(99, 102, 241, 0.18);
+  box-shadow:
+    0 12px 30px -8px rgba(0, 0, 0, 0.6),
+    0 0 20px -4px rgba(99, 102, 241, 0.12);
+  color: #F8FAFC;
+}
+
+/* Primary Highlight Card */
+.genz-card-primary,
+.clay-card-primary {
+  background: linear-gradient(135deg, rgba(50, 124, 246, 0.15) 0%, rgba(99, 102, 241, 0.12) 100%);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow:
+    0 12px 32px -6px rgba(50, 124, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  color: #F8FAFC;
+}
+
+/* Dark Contrast Card */
+.genz-card-dark,
+.clay-card-dark {
+  background: #0B0F19;
+  border-radius: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.12);
-}
-
-/* Hero and mesh ambient lighting */
-.hero-mesh-gradient {
-  background-color: #0B132B;
-  background-image: 
-    radial-gradient(at 0% 0%, rgba(37, 99, 235, 0.38) 0px, transparent 55%),
-    radial-gradient(at 100% 0%, rgba(99, 102, 241, 0.32) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(14, 165, 233, 0.25) 0px, transparent 55%);
-}
-
-.subtle-mesh {
-  background-image: 
-    radial-gradient(at 10% 15%, rgba(37, 99, 235, 0.04) 0px, transparent 40%),
-    radial-gradient(at 90% 85%, rgba(16, 185, 129, 0.03) 0px, transparent 40%);
-}
-
-/* Card hover lift & glow */
-.job-card-interactive {
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
-}
-
-.job-card-interactive:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -6px rgba(15, 23, 42, 0.09), 0 4px 12px -2px rgba(15, 23, 42, 0.04);
-  border-color: rgba(37, 99, 235, 0.35);
-}
-
-/* Custom animated pill toggle */
-.pill-toggle-active {
-  background: #2563EB;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.85);
   color: #FFFFFF;
-  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
 }
 
-/* Radar pulse animation */
-@keyframes radar-ping {
-  0% { transform: scale(0.95); opacity: 0.8; }
-  50% { transform: scale(1.1); opacity: 0.3; }
-  100% { transform: scale(0.95); opacity: 0.8; }
+/* Interactive hover elevation */
+.genz-interactive,
+.clay-interactive {
+  transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease;
 }
 
-.animate-radar-ping {
-  animation: radar-ping 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.genz-interactive:hover,
+.clay-interactive:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.4);
+  box-shadow:
+    0 16px 36px -6px rgba(0, 0, 0, 0.7),
+    0 0 25px rgba(50, 124, 246, 0.22);
 }
 
-/* Subtle pulse for active badges */
-@keyframes subtle-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.65; }
+/* ==========================================================
+   GEN-Z TECH BUTTONS
+   ========================================================== */
+
+.genz-btn,
+.clay-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  border-radius: 0.85rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  letter-spacing: -0.01em;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
+  border: none;
+  outline: none;
 }
 
-.animate-subtle-pulse {
-  animation: subtle-pulse 2.2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.genz-btn:disabled,
+.clay-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
 }
 
-/* Custom scrollbars */
+/* Primary Electric Button (takeuforward style) */
+.genz-btn-primary,
+.clay-btn-primary {
+  background: linear-gradient(135deg, #327CF6 0%, #2563EB 50%, #6366F1 100%);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow:
+    0 8px 24px -4px rgba(50, 124, 246, 0.45),
+    inset 0 1px 1px rgba(255, 255, 255, 0.3);
+}
+
+.genz-btn-primary:hover:not(:disabled),
+.clay-btn-primary:hover:not(:disabled) {
+  background: linear-gradient(135deg, #448CF8 0%, #3B82F6 50%, #7579F5 100%);
+  transform: translateY(-1.5px);
+  box-shadow:
+    0 12px 30px -4px rgba(50, 124, 246, 0.6),
+    inset 0 1px 1.5px rgba(255, 255, 255, 0.4);
+}
+
+.genz-btn-primary:active:not(:disabled),
+.clay-btn-primary:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: 0 4px 12px rgba(50, 124, 246, 0.35);
+}
+
+/* Secondary Button (Glassmorphic) */
+.genz-btn-secondary,
+.clay-btn-secondary {
+  background: rgba(255, 255, 255, 0.06);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(8px);
+}
+
+.genz-btn-secondary:hover:not(:disabled),
+.clay-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #FFFFFF;
+  transform: translateY(-1.5px);
+}
+
+/* Success Green Button */
+.genz-btn-success,
+.clay-btn-success {
+  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  color: #FFFFFF;
+  box-shadow: 0 8px 20px -3px rgba(16, 185, 129, 0.4);
+}
+
+.genz-btn-success:hover:not(:disabled),
+.clay-btn-success:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow: 0 12px 24px -3px rgba(16, 185, 129, 0.55);
+}
+
+/* Danger Button */
+.genz-btn-danger,
+.clay-btn-danger {
+  background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+  color: #FFFFFF;
+  box-shadow: 0 8px 20px -3px rgba(239, 68, 68, 0.4);
+}
+
+.genz-btn-danger:hover:not(:disabled),
+.clay-btn-danger:hover:not(:disabled) {
+  transform: translateY(-1.5px);
+  box-shadow: 0 12px 24px -3px rgba(239, 68, 68, 0.55);
+}
+
+/* Ghost Button */
+.genz-btn-ghost,
+.clay-btn-ghost {
+  background: transparent;
+  color: #94A3B8;
+}
+
+.genz-btn-ghost:hover:not(:disabled),
+.clay-btn-ghost:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.08);
+  color: #F8FAFC;
+}
+
+/* ==========================================================
+   GEN-Z FORM INPUTS
+   ========================================================== */
+
+.genz-input-surface,
+.clay-input-surface {
+  background: rgba(14, 20, 32, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.85rem;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.35);
+  color: #F8FAFC;
+  transition: all 0.2s ease;
+}
+
+.genz-input-surface:focus,
+.clay-input-surface:focus {
+  border-color: #38BDF8;
+  outline: none;
+  box-shadow:
+    0 0 0 3px rgba(56, 189, 248, 0.2),
+    0 0 16px rgba(50, 124, 246, 0.25);
+}
+
+/* ==========================================================
+   FLOATING PILL NAVBAR
+   ========================================================== */
+
+.genz-floating-nav,
+.clay-floating-nav {
+  background: rgba(10, 15, 24, 0.82);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 16px 40px -10px rgba(0, 0, 0, 0.75),
+    0 0 25px -4px rgba(50, 124, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+.genz-mobile-nav,
+.clay-mobile-nav {
+  background: rgba(10, 15, 24, 0.94);
+  backdrop-filter: blur(22px);
+  -webkit-backdrop-filter: blur(22px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.8);
+}
+
+/* ==========================================================
+   PILL & BADGE STYLES
+   ========================================================== */
+
+.genz-pill-active,
+.clay-pill-active {
+  background: linear-gradient(135deg, rgba(50, 124, 246, 0.25) 0%, rgba(99, 102, 241, 0.3) 100%);
+  color: #38BDF8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  box-shadow:
+    0 4px 16px rgba(50, 124, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
+
+.genz-pill-inactive,
+.clay-pill-inactive {
+  background: rgba(255, 255, 255, 0.04);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.genz-pill-inactive:hover,
+.clay-pill-inactive:hover {
+  background: rgba(255, 255, 255, 0.09);
+  color: #F8FAFC;
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* ==========================================================
+   AMBIENT GLOW LAYERS (takeuforward style)
+   ========================================================== */
+
+.genz-ambient-glow {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(120px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.genz-glow-blue {
+  background: radial-gradient(circle, rgba(50, 124, 246, 0.18) 0%, rgba(50, 124, 246, 0) 70%);
+}
+
+.genz-glow-cyan {
+  background: radial-gradient(circle, rgba(56, 189, 248, 0.16) 0%, rgba(56, 189, 248, 0) 70%);
+}
+
+.genz-glow-violet {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0) 70%);
+}
+
+/* Gradient text utility */
+.genz-gradient-text {
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 45%, #38BDF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.genz-gradient-accent {
+  background: linear-gradient(135deg, #38BDF8 0%, #327CF6 50%, #818CF8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Custom dark scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #F1F5F9;
+  background: #090D16;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #CBD5E1;
+  background: #1E293B;
   border-radius: 9999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94A3B8;
+  background: #334155;
 }
 
-/* Accessibility: Respect prefers-reduced-motion */
+/* ==========================================================
+   GLOBAL SURFACE CONTRAST & SEMANTIC COLOR SYSTEM
+   Rule: Text color MUST ALWAYS be determined by its surface context.
+   ========================================================== */
+
+/* Dark page canvas reset */
+html, body {
+  background-color: #030712 !important;
+  color: #F8FAFC !important;
+}
+
+/* ----------------------------------------------------------
+   SURFACE DEFINITIONS & SEMANTIC TOKENS
+   ---------------------------------------------------------- */
+.surface-dark,
+[data-surface="dark"] {
+  --surface-bg: #0E1626;
+  --surface-border: rgba(255, 255, 255, 0.08);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-muted: #94A3B8;
+  color: #F8FAFC;
+}
+
+.surface-light,
+[data-surface="light"] {
+  --surface-bg: #FFFFFF;
+  --surface-border: #CBD5E1;
+  --text-primary: #0F172A;
+  --text-secondary: #334155;
+  --text-muted: #64748B;
+  color: #0F172A !important;
+}
+
+/* Force dark backgrounds on legacy light page wrappers (unless explicit surface-light) */
+body > .bg-\[\#F8FAFC\],
+body > .bg-\[\#F7F7FB\],
+body > .bg-\[\#F0F2FA\],
+body > .bg-\[\#F5F3FF\],
+body > .bg-\[\#FAF9FE\],
+body > .bg-\[\#F1EEFC\],
+body > .bg-gray-50,
+body > .bg-slate-50 {
+  background-color: #030712 !important;
+}
+
+/* Transform rogue full-page white cards to dark glass, while protecting intentional light surfaces */
+div.bg-white:not(.surface-light):not([data-surface="light"]):not(.keep-white):not([data-keep-white]):not([class*="from-"]):not([class*="bg-\[\#EDE9FE\]"]):not([class*="bg-\[\#E0F2FE\]"]):not([class*="bg-\[\#ECFDF5\]"]):not([class*="bg-\[\#FFFBEB\]"]),
+section.bg-white:not(.surface-light):not([data-surface="light"]),
+article.bg-white:not(.surface-light):not([data-surface="light"]),
+aside.bg-white:not(.surface-light):not([data-surface="light"]),
+.clay-card.bg-white:not(.surface-light),
+.clay-card-raised.bg-white:not(.surface-light),
+.clay-card-soft.bg-white:not(.surface-light) {
+  background-color: rgba(14, 22, 38, 0.82) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #F8FAFC !important;
+}
+
+/* ----------------------------------------------------------
+   DARK SURFACES TYPOGRAPHY (Default App Shell)
+   High-contrast light text on dark surfaces
+   ---------------------------------------------------------- */
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#25243A\],
+.clay-card-raised:not(.surface-light):not([data-surface="light"]) .text-\[\#25243A\],
+.clay-card-soft:not(.surface-light):not([data-surface="light"]) .text-\[\#25243A\],
+.clay-card-dark .text-\[\#25243A\],
+.genz-card:not(.surface-light):not([data-surface="light"]) .text-\[\#25243A\],
+.surface-dark .text-\[\#25243A\],
+[data-surface="dark"] .text-\[\#25243A\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#0F172A\],
+.clay-card-raised:not(.surface-light):not([data-surface="light"]) .text-\[\#0F172A\],
+.clay-card-soft:not(.surface-light):not([data-surface="light"]) .text-\[\#0F172A\],
+.clay-card-dark .text-\[\#0F172A\],
+.genz-card:not(.surface-light):not([data-surface="light"]) .text-\[\#0F172A\],
+.surface-dark .text-\[\#0F172A\],
+[data-surface="dark"] .text-\[\#0F172A\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#1E293B\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#1E1C2E\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-slate-900,
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-gray-900,
+.genz-card:not(.surface-light):not([data-surface="light"]) .text-slate-900 {
+  color: #F8FAFC !important;
+}
+
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#7E7C9A\],
+.clay-card-raised:not(.surface-light):not([data-surface="light"]) .text-\[\#7E7C9A\],
+.clay-card-soft:not(.surface-light):not([data-surface="light"]) .text-\[\#7E7C9A\],
+.clay-card-dark .text-\[\#7E7C9A\],
+.genz-card:not(.surface-light):not([data-surface="light"]) .text-\[\#7E7C9A\],
+.surface-dark .text-\[\#7E7C9A\],
+[data-surface="dark"] .text-\[\#7E7C9A\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#64748B\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#6C6A84\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#6F6D82\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-\[\#9D9BB1\],
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-slate-600,
+.clay-card:not(.surface-light):not([data-surface="light"]) .text-gray-600 {
+  color: #94A3B8 !important;
+}
+
+/* ----------------------------------------------------------
+   LIGHT SURFACES ENGINE
+   Crisp, WCAG AAA / AA dark typography on any light surface
+   ---------------------------------------------------------- */
+.surface-light,
+[data-surface="light"],
+[class*="from-[#EDE9FE]"],
+[class*="from-[#E0F2FE]"],
+[class*="from-[#ECFDF5]"],
+[class*="from-[#EFF6FF]"],
+[class*="from-[#FFFBEB]"],
+[class*="from-[#FFF7ED]"],
+[class*="from-[#FFF1F2]"],
+[class*="from-blue-50"],
+[class*="from-indigo-50"],
+[class*="from-sky-50"] {
+  color: #0F172A !important;
+}
+
+/* Headings on light surfaces -> Deep Dark Charcoal #0F172A */
+.surface-light h1, .surface-light h2, .surface-light h3, .surface-light h4, .surface-light h5, .surface-light h6,
+[data-surface="light"] h1, [data-surface="light"] h2, [data-surface="light"] h3, [data-surface="light"] h4, [data-surface="light"] h5, [data-surface="light"] h6,
+[class*="from-[#EDE9FE]"] h1, [class*="from-[#EDE9FE]"] h2, [class*="from-[#EDE9FE]"] h3, [class*="from-[#EDE9FE]"] h4,
+[class*="from-[#E0F2FE]"] h1, [class*="from-[#E0F2FE]"] h2, [class*="from-[#E0F2FE]"] h3, [class*="from-[#E0F2FE]"] h4,
+[class*="from-blue-50"] h1, [class*="from-blue-50"] h2, [class*="from-blue-50"] h3, [class*="from-blue-50"] h4 {
+  color: #0F172A !important;
+}
+
+/* Primary text on light surfaces -> #0F172A */
+.surface-light .text-\[\#25243A\],
+.surface-light .text-\[\#0F172A\],
+.surface-light .text-\[\#1E1C2E\],
+.surface-light .text-\[\#1E293B\],
+.surface-light .text-slate-900,
+.surface-light .text-gray-900,
+[data-surface="light"] .text-\[\#25243A\],
+[data-surface="light"] .text-\[\#0F172A\],
+[data-surface="light"] .text-\[\#1E1C2E\],
+[data-surface="light"] .text-\[\#1E293B\],
+[data-surface="light"] .text-slate-900,
+[data-surface="light"] .text-gray-900,
+[class*="from-[#EDE9FE]"] .text-\[\#25243A\],
+[class*="from-[#EDE9FE]"] .text-\[\#0F172A\],
+[class*="from-[#EDE9FE]"] .text-\[\#1E293B\],
+[class*="from-[#EDE9FE]"] .text-slate-900,
+[class*="from-[#EDE9FE]"] strong,
+[class*="from-[#EDE9FE]"] b,
+[class*="from-blue-50"] .text-\[\#0F172A\],
+[class*="from-blue-50"] .text-slate-900,
+[class*="from-blue-50"] strong {
+  color: #0F172A !important;
+}
+
+/* Secondary & Muted labels on light surfaces -> Slate #334155 / #475569 */
+.surface-light .text-\[\#7E7C9A\],
+.surface-light .text-\[\#64748B\],
+.surface-light .text-\[\#6C6A84\],
+.surface-light .text-\[\#6F6D82\],
+.surface-light .text-\[\#9D9BB1\],
+.surface-light .text-slate-600,
+.surface-light .text-gray-600,
+.surface-light .text-slate-500,
+.surface-light .text-slate-400,
+[data-surface="light"] .text-\[\#7E7C9A\],
+[data-surface="light"] .text-\[\#64748B\],
+[data-surface="light"] .text-\[\#6C6A84\],
+[data-surface="light"] .text-\[\#6F6D82\],
+[data-surface="light"] .text-\[\#9D9BB1\],
+[data-surface="light"] .text-slate-600,
+[data-surface="light"] .text-gray-600,
+[data-surface="light"] .text-slate-500,
+[data-surface="light"] .text-slate-400,
+[class*="from-[#EDE9FE]"] .text-\[\#7E7C9A\],
+[class*="from-[#EDE9FE]"] .text-\[\#64748B\],
+[class*="from-[#EDE9FE]"] .text-\[\#6F6D82\],
+[class*="from-[#EDE9FE]"] .text-slate-500,
+[class*="from-[#EDE9FE]"] .text-slate-400,
+[class*="from-blue-50"] .text-\[\#475569\],
+[class*="from-blue-50"] .text-slate-600,
+[class*="from-blue-50"] .text-slate-500 {
+  color: #475569 !important;
+}
+
+/* Accents & Icons on light surfaces -> Saturated accessible dark indigo/blue */
+.surface-light .text-\[\#6C5CE7\],
+.surface-light .text-\[\#5146C7\],
+[data-surface="light"] .text-\[\#6C5CE7\],
+[data-surface="light"] .text-\[\#5146C7\],
+[class*="from-[#EDE9FE]"] .text-\[\#6C5CE7\],
+[class*="from-[#EDE9FE]"] .text-\[\#5146C7\],
+[class*="from-[#EDE9FE]"] svg {
+  color: #4338CA !important;
+}
+
+.surface-light a,
+[data-surface="light"] a,
+[class*="from-[#EDE9FE]"] a {
+  color: #4338CA !important;
+}
+.surface-light a:hover,
+[data-surface="light"] a:hover,
+[class*="from-[#EDE9FE]"] a:hover {
+  color: #312E81 !important;
+  text-decoration: underline;
+}
+
+/* Block white text on light surfaces */
+.surface-light .text-white,
+[data-surface="light"] .text-white,
+[class*="from-[#EDE9FE]"] .text-white,
+[class*="from-blue-50"] .text-white {
+  color: #0F172A !important;
+}
+
+/* Inner white sub-containers inside light surfaces (e.g., instructions box in interview card) */
+.surface-light .bg-white\/80,
+.surface-light .bg-white,
+[data-surface="light"] .bg-white\/80,
+[data-surface="light"] .bg-white,
+[class*="from-[#EDE9FE]"] .bg-white\/80,
+[class*="from-[#EDE9FE]"] .bg-white {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  color: #0F172A !important;
+  border-color: #CBD5E1 !important;
+}
+
+.surface-light .bg-white\/80 *,
+.surface-light .bg-white *,
+[data-surface="light"] .bg-white\/80 *,
+[data-surface="light"] .bg-white *,
+[class*="from-[#EDE9FE]"] .bg-white\/80 *,
+[class*="from-[#EDE9FE]"] .bg-white * {
+  color: #0F172A !important;
+}
+
+/* Inputs & Form Controls on light surfaces */
+.surface-light input,
+.surface-light textarea,
+.surface-light select,
+[data-surface="light"] input,
+[data-surface="light"] textarea,
+[data-surface="light"] select,
+[class*="from-[#EDE9FE]"] input,
+[class*="from-[#EDE9FE]"] textarea {
+  background-color: #FFFFFF !important;
+  color: #0F172A !important;
+  border: 1px solid #CBD5E1 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+}
+
+.surface-light input::placeholder,
+.surface-light textarea::placeholder,
+[data-surface="light"] input::placeholder,
+[data-surface="light"] textarea::placeholder,
+[class*="from-[#EDE9FE]"] input::placeholder,
+[class*="from-[#EDE9FE]"] textarea::placeholder {
+  color: #64748B !important;
+  opacity: 1 !important;
+}
+
+/* ----------------------------------------------------------
+   FORM CONTROLS & DATE/TIME PICKERS SYSTEM
+   ---------------------------------------------------------- */
+/* Native calendar & clock picker theme */
+input[type="date"],
+input[type="time"] {
+  color-scheme: dark !important;
+}
+
+.surface-light input[type="date"],
+.surface-light input[type="time"],
+[data-surface="light"] input[type="date"],
+[data-surface="light"] input[type="time"] {
+  color-scheme: light !important;
+}
+
+select option {
+  background-color: #0B0F19 !important;
+  color: #F8FAFC !important;
+}
+
+/* Legacy cards inside dark layout */
+.clay-card,
+.clay-card-raised,
+.clay-card-soft {
+  background: rgba(14, 22, 38, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: 0 10px 30px -8px rgba(0, 0, 0, 0.6) !important;
+  color: #F8FAFC !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.clay-card select,
+.clay-card input,
+.clay-card textarea {
+  background-color: #0B0F19 !important;
+  color: #F8FAFC !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Active navigation pills */
+.clay-pill-active {
+  background: linear-gradient(135deg, #4F46E5 0%, #06B6D4 100%) !important;
+  color: #FFFFFF !important;
+  box-shadow: 0 4px 15px -2px rgba(79, 70, 229, 0.45) !important;
+}
+
+/* ==========================================================
+   ADVANCED GEN-Z AI ANIMATIONS & EFFECTS
+   ========================================================== */
+
+@keyframes floatSlow {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes glowPulse {
+  0%, 100% {
+    opacity: 0.35;
+    filter: drop-shadow(0 0 15px rgba(56, 189, 248, 0.3));
+  }
+  50% {
+    opacity: 0.75;
+    filter: drop-shadow(0 0 25px rgba(99, 102, 241, 0.55));
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes fadeInScale {
+  0% {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatSlow 4s ease-in-out 2s infinite;
+}
+
+.animate-glow {
+  animation: glowPulse 3s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradientMove 6s ease infinite;
+}
+
+.animate-fadeIn {
+  animation: fadeInScale 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes pulseSlow {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.04); }
+}
+
+.animate-pulse-slow {
+  animation: pulseSlow 5s ease-in-out infinite;
+}
+
+/* Portfolio-style grid background container */
+.portfolio-grid-overlay {
+  position: absolute;
+  inset: 0;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, #000 70%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 10%, #000 70%, transparent 100%);
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after {
     animation-duration: 0.01ms !important;

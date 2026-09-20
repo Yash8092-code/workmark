@@ -8,10 +8,15 @@ import { uploadToCloudinary } from '../middleware/upload';
 export const getProfile = asyncHandler(async (req: Request, res: Response) => {
   const { userId } = req.params;
 
-  const profile = await Profile.findOne({ userId }).populate('userId', 'name email avatar role');
+  let profile = await Profile.findOne({ userId }).populate('userId', 'name email avatar role');
 
   if (!profile) {
-    throw new AppError('Profile not found', 404);
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new AppError('User not found', 404);
+    }
+    profile = await Profile.create({ userId });
+    profile = await Profile.findById(profile._id).populate('userId', 'name email avatar role');
   }
 
   res.status(200).json({
@@ -23,15 +28,40 @@ export const getProfile = asyncHandler(async (req: Request, res: Response) => {
 export const updateProfile = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?._id;
 
+  const sanitizeDates = (items: any[]) => {
+    if (!Array.isArray(items)) return items;
+    return items.map((item) => {
+      const copy = { ...item };
+      if (copy.startDate === '' || copy.startDate === null) delete copy.startDate;
+      if (copy.endDate === '' || copy.endDate === null) delete copy.endDate;
+      return copy;
+    });
+  };
+
+  const updateData = { ...req.body };
+  if (updateData.experience) {
+    updateData.experience = sanitizeDates(updateData.experience);
+  }
+  if (updateData.education) {
+    updateData.education = sanitizeDates(updateData.education);
+  }
+  if (updateData.projects) {
+    updateData.projects = sanitizeDates(updateData.projects);
+  }
+
+  // If user name or phone is passed, update User document as well
+  if (req.body.name || req.body.phone) {
+    await User.findByIdAndUpdate(userId, {
+      ...(req.body.name ? { name: req.body.name } : {}),
+      ...(req.body.phone ? { phone: req.body.phone } : {}),
+    });
+  }
+
   const profile = await Profile.findOneAndUpdate(
     { userId },
-    { $set: req.body },
-    { new: true, runValidators: true }
+    { $set: updateData },
+    { new: true, upsert: true, runValidators: true }
   ).populate('userId', 'name email avatar role');
-
-  if (!profile) {
-    throw new AppError('Profile not found', 404);
-  }
 
   res.status(200).json({
     success: true,
@@ -45,17 +75,13 @@ export const uploadResume = asyncHandler(async (req: Request, res: Response) => 
     throw new AppError('No file uploaded', 400);
   }
 
-  const resumeUrl = await uploadToCloudinary(req.file, 'workmark/resumes');
+  const resumeUrl = await uploadToCloudinary(req.file, 'workmark/resumes', 'auto');
 
   const profile = await Profile.findOneAndUpdate(
     { userId: req.user?._id },
     { resumeUrl },
-    { new: true }
+    { new: true, upsert: true }
   );
-
-  if (!profile) {
-    throw new AppError('Profile not found', 404);
-  }
 
   res.status(200).json({
     success: true,

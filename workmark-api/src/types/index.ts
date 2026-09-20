@@ -4,6 +4,9 @@ export interface IUser extends Document {
   _id: Types.ObjectId;
   name: string;
   email: string;
+  username: string;
+  mobileNumber?: string;
+  domains?: string[];
   password: string;
   role: 'job_seeker' | 'employer' | 'admin';
   avatar?: string;
@@ -62,31 +65,35 @@ export interface IProfile extends Document {
 }
 
 export interface IEducation {
-  school: string;
+  school?: string;
+  institution?: string;
   degree: string;
-  field: string;
-  startDate: Date;
+  field?: string;
+  fieldOfStudy?: string;
+  startDate?: Date;
   endDate?: Date;
-  current: boolean;
+  current?: boolean;
   description?: string;
 }
 
 export interface IExperience {
   company: string;
-  position: string;
+  position?: string;
+  title?: string;
   location?: string;
-  startDate: Date;
+  startDate?: Date;
   endDate?: Date;
-  current: boolean;
+  current?: boolean;
   description?: string;
 }
 
 export interface IProject {
   title: string;
-  description: string;
-  technologies: string[];
+  description?: string;
+  technologies?: string[];
   link?: string;
-  startDate: Date;
+  url?: string;
+  startDate?: Date;
   endDate?: Date;
 }
 
@@ -100,6 +107,7 @@ export interface ICompany extends Document {
   description?: string;
   industry?: string;
   companySize?: string;
+  size?: string;
   location?: string;
   website?: string;
   foundedYear?: number;
@@ -155,6 +163,19 @@ export interface IJobs extends Document {
   updatedAt: Date;
 }
 
+export type ApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'interview' | 'rejected' | 'accepted';
+
+export interface IInterview {
+  status?: 'scheduled' | 'rescheduled' | 'cancelled' | 'completed';
+  scheduledAt?: Date;
+  date?: string;
+  time?: string;
+  mode?: 'video' | 'phone' | 'onsite';
+  locationOrLink?: string;
+  message?: string;
+  cancelledReason?: string;
+}
+
 export interface IApplication extends Document {
   _id: Types.ObjectId;
   jobId: Types.ObjectId;
@@ -162,15 +183,25 @@ export interface IApplication extends Document {
   employerId: Types.ObjectId;
   resumeUrl?: string;
   coverLetter?: string;
-  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'accepted';
+  status: ApplicationStatus;
+  isViewedByEmployer: boolean;
+  appliedAt: Date;
+  reviewedAt?: Date;
+  shortlistedAt?: Date;
+  interviewAt?: Date;
+  acceptedAt?: Date;
+  rejectedAt?: Date;
+  interview?: IInterview;
   statusHistory: IStatusHistory[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface IStatusHistory {
-  status: 'pending' | 'reviewed' | 'shortlisted' | 'rejected' | 'accepted';
+  status: ApplicationStatus;
   changedAt: Date;
+  note?: string;
+  changedBy?: Types.ObjectId;
 }
 
 export interface ISavedJob extends Document {

@@ -72,13 +72,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (data: RegisterInput): Promise<{ user: User; requireVerification?: boolean }> => {
     try {
       const response = await authApi.register(data);
-      if (response.token && response.user.isVerified) {
+      if (response.token) {
         sessionStorage.setItem('token', response.token);
         setUser(response.user);
       }
+      toast.success('Account created successfully! Welcome to Workmark.');
       return {
         user: response.user,
-        requireVerification: response.requireVerification !== false,
+        requireVerification: false,
       };
     } catch (error: any) {
       toast.error(error.message || 'Registration failed');

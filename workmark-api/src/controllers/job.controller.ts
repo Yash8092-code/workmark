@@ -3,6 +3,9 @@ import { asyncHandler } from '../utils/asyncHandler';
 import { AppError } from '../utils/AppError';
 import Job from '../models/Job';
 import Company from '../models/Company';
+import Profile from '../models/Profile';
+import Application from '../models/Application';
+import { calculateOpportunityIntelligence } from '../services/opportunity.service';
 import {
   paginate,
   buildSortQuery,
@@ -44,8 +47,28 @@ export const createJob = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Not authorized to post jobs for this company', 403);
   }
 
+  let salary = req.body.salary;
+  if (!salary && (req.body.salaryMin !== undefined || req.body.salaryMax !== undefined)) {
+    salary = {
+      min: req.body.salaryMin ? Number(req.body.salaryMin) : undefined,
+      max: req.body.salaryMax ? Number(req.body.salaryMax) : undefined,
+      currency: req.body.salaryCurrency || 'USD',
+      period: req.body.salaryPeriod === 'year' ? 'yearly' : req.body.salaryPeriod === 'month' ? 'monthly' : (req.body.salaryPeriod || 'yearly'),
+    };
+  } else if (salary && salary.period) {
+    if (salary.period === 'year') salary.period = 'yearly';
+    if (salary.period === 'month') salary.period = 'monthly';
+    if (salary.period === 'hour') salary.period = 'hourly';
+  }
+
+  const country = req.body.country || company.location || 'India';
+  const countryCode = req.body.countryCode || (req.user as any).countryCode || 'in';
+
   const job = await Job.create({
     ...req.body,
+    ...(salary ? { salary } : {}),
+    country,
+    countryCode,
     employerId: req.user._id,
     companyName: company.name,
     companyLogo: company.logo,
@@ -291,9 +314,22 @@ export const getJob = asyncHandler(async (req: Request, res: Response) => {
   job.views += 1;
   await job.save();
 
+  const rawJob = typeof job.toObject === 'function' ? job.toObject() : { ...job };
+  let opportunityIntelligence;
+  if (req.user) {
+    const profile = await Profile.findOne({ userId: req.user._id });
+    opportunityIntelligence = calculateOpportunityIntelligence(rawJob, req.user, profile);
+  }
+
   res.status(200).json({
     success: true,
-    data: { job },
+    data: {
+      job: {
+        ...rawJob,
+        matchScore: opportunityIntelligence?.score,
+        opportunityIntelligence,
+      },
+    },
   });
 });
 
@@ -310,9 +346,23 @@ export const updateJob = asyncHandler(async (req: Request, res: Response) => {
     throw new AppError('Not authorized to update this job', 403);
   }
 
+  const updateData = { ...req.body };
+  if (!updateData.salary && (updateData.salaryMin !== undefined || updateData.salaryMax !== undefined)) {
+    updateData.salary = {
+      min: updateData.salaryMin ? Number(updateData.salaryMin) : undefined,
+      max: updateData.salaryMax ? Number(updateData.salaryMax) : undefined,
+      currency: updateData.salaryCurrency || job.salary?.currency || 'USD',
+      period: updateData.salaryPeriod === 'year' ? 'yearly' : updateData.salaryPeriod === 'month' ? 'monthly' : (updateData.salaryPeriod || job.salary?.period || 'yearly'),
+    };
+  } else if (updateData.salary && updateData.salary.period) {
+    if (updateData.salary.period === 'year') updateData.salary.period = 'yearly';
+    if (updateData.salary.period === 'month') updateData.salary.period = 'monthly';
+    if (updateData.salary.period === 'hour') updateData.salary.period = 'hourly';
+  }
+
   const updatedJob = await Job.findByIdAndUpdate(
     id,
-    { $set: req.body },
+    { $set: updateData },
     { new: true, runValidators: true }
   );
 
@@ -385,9 +435,43 @@ export const getEmployerJobs = asyncHandler(async (req: Request, res: Response) 
     { createdAt: -1 }
   );
 
+  // Compute live application counts per stage for each job
+  const enhancedJobs = await Promise.all(
+    result.data.map(async (job) => {
+      const applications = await Application.find({ jobId: job._id });
+      
+      const stageCounts = {
+        pending: 0,
+        reviewed: 0,
+        shortlisted: 0,
+        interview: 0,
+        accepted: 0,
+        rejected: 0,
+      };
+
+      let newApplicationsCount = 0;
+      for (const app of applications) {
+        if (stageCounts[app.status as keyof typeof stageCounts] !== undefined) {
+          stageCounts[app.status as keyof typeof stageCounts]++;
+        }
+        if (!app.isViewedByEmployer) {
+          newApplicationsCount++;
+        }
+      }
+
+      const rawJob = typeof (job as any).toObject === 'function' ? (job as any).toObject() : { ...job };
+      return {
+        ...rawJob,
+        applicationCount: applications.length,
+        newApplicationsCount,
+        stageCounts,
+      };
+    })
+  );
+
   res.status(200).json({
     success: true,
-    data: result.data,
+    data: enhancedJobs,
     pagination: result.pagination,
   });
 });

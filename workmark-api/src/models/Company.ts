@@ -37,6 +37,10 @@ const companySchema = new Schema<ICompany>(
       type: String,
       trim: true,
     },
+    size: {
+      type: String,
+      trim: true,
+    },
     location: {
       type: String,
       trim: true,

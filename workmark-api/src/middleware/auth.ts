@@ -23,7 +23,7 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-    } else if (req.cookies.token) {
+    } else if (req.cookies?.token) {
       token = req.cookies.token;
     }
 
@@ -56,6 +56,39 @@ export const authenticate = async (req: Request, res: Response, next: NextFuncti
     } else {
       next(error);
     }
+  }
+};
+
+export const optionalAuthenticate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    let token: string | undefined;
+
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+      token = req.headers.authorization.split(' ')[1];
+    } else if (req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
+      return next();
+    }
+
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      return next();
+    }
+
+    const decoded = jwt.verify(token, jwtSecret) as JwtPayload;
+    const user = await User.findById(decoded.userId);
+
+    if (user && user.isActive) {
+      req.user = user;
+    }
+
+    next();
+  } catch (error) {
+    // Silently continue for optional auth
+    next();
   }
 };
 

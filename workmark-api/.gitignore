@@ -25,6 +25,9 @@ pnpm-debug.log*
 scratch/
 coverage/
 
+# Uploaded user files
+uploads/
+
 # OS and editor files
 .DS_Store
 Thumbs.db

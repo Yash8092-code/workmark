@@ -36,7 +36,7 @@ export const DropdownMenu: React.FC<DropdownMenuProps> = ({ trigger, children, a
       {isOpen && (
         <div
           className={cn(
-            'absolute top-full mt-2 w-48 bg-white border border-[#E2E8F0] rounded-lg shadow-lg py-1 z-50',
+            'absolute top-full mt-2 w-48 bg-[#0E1626] border border-white/15 rounded-xl shadow-2xl py-1.5 z-50 backdrop-blur-xl',
             align === 'right' ? 'right-0' : 'left-0'
           )}
         >
@@ -59,8 +59,10 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, i
     <button
       onClick={onClick}
       className={cn(
-        'w-full flex items-center px-4 py-2 text-sm text-left hover:bg-[#F8FAFC] transition-colors',
-        danger ? 'text-[#DC2626]' : 'text-[#172033]'
+        'w-full flex items-center px-4 py-2.5 text-sm text-left font-medium transition-colors',
+        danger
+          ? 'text-rose-400 hover:text-rose-300 hover:bg-rose-500/15'
+          : 'text-slate-200 hover:text-white hover:bg-white/10'
       )}
     >
       {icon && <span className="mr-3">{icon}</span>}
@@ -70,5 +72,5 @@ export const DropdownItem: React.FC<DropdownItemProps> = ({ children, onClick, i
 };
 
 export const DropdownDivider: React.FC = () => {
-  return <div className="my-1 border-t border-[#E2E8F0]" />;
+  return <div className="my-1 border-t border-white/10" />;
 };

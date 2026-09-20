@@ -9,24 +9,24 @@ export const FeaturedJobs: React.FC = () => {
   const { data: jobs, isLoading } = useFeaturedJobs();
 
   return (
-    <section className="py-20 bg-[#F8FAFC]">
+    <section className="py-20 bg-[#090D16] border-b border-white/5">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-bold uppercase tracking-wider mb-2 border border-amber-200/80">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold uppercase tracking-wider mb-2 border border-amber-500/20">
               <Sparkles className="h-3.5 w-3.5" />
               <span>Hand-Picked Roles</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
+            <h2 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
               Featured Opportunities
             </h2>
-            <p className="text-sm text-[#64748B] mt-1">
+            <p className="text-sm text-slate-400 mt-1">
               Top roles actively hiring from leading tech employers
             </p>
           </div>
           <Link
             to="/jobs"
-            className="text-sm font-bold text-[#2563EB] hover:text-[#1D4ED8] flex items-center gap-1 group"
+            className="text-sm font-bold text-cyan-400 hover:text-cyan-300 flex items-center gap-1 group transition-colors"
           >
             <span>Explore all open positions</span>
             <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />

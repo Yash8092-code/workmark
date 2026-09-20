@@ -1,8 +1,13 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, UserX, UserCheck, Trash2 } from 'lucide-react';
+import { Search, UserX, UserCheck, Trash2, Users, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import * as adminApi from '../../api/admin';
 import toast from 'react-hot-toast';
+import { Card } from '../../components/ui/Card';
+import { Input } from '../../components/ui/Input';
+import { Spinner } from '../../components/ui/Spinner';
+import { EmptyState } from '../../components/ui/EmptyState';
 
 export default function UsersManagement() {
   const [search, setSearch] = useState('');
@@ -37,26 +42,44 @@ export default function UsersManagement() {
   const users = usersData?.data || [];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-8">
+    <div className="min-h-screen bg-[#F7F7FB] py-8 sm:py-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 className="text-3xl font-bold text-[#0F2747] mb-8">User Management</h1>
+        {/* Header */}
+        <div className="clay-card-raised bg-white border border-white/80 rounded-3xl p-6 sm:p-8 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <Link to="/admin" className="inline-flex items-center gap-1 text-xs font-bold text-[#6C5CE7] hover:underline mb-2">
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Back to Admin Hub</span>
+              </Link>
+              <h1 className="text-2xl sm:text-3xl font-black text-[#25243A]">User Management</h1>
+              <p className="text-xs sm:text-sm text-[#6C6A84] font-medium mt-1">
+                Audit registered accounts, update role permissions, and handle suspensions.
+              </p>
+            </div>
+            <div className="text-xs font-bold text-[#6C5CE7] bg-[#EDE9FE] px-3.5 py-1.5 rounded-xl border border-[#DDD6FE] self-start sm:self-auto">
+              Total Accounts: {users.length}
+            </div>
+          </div>
+        </div>
 
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-6">
+        {/* Filter Controls & Table Card */}
+        <Card className="clay-card-raised bg-white border border-white/80 rounded-3xl p-6 sm:p-8">
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-[#64748B]" />
-              <input
+            <div className="flex-1">
+              <Input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search users..."
-                className="w-full pl-10 pr-4 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                placeholder="Search by name or email..."
+                icon={<Search className="w-4 h-4 text-[#6C6A84]" />}
+                className="rounded-2xl"
               />
             </div>
             <select
               value={roleFilter}
               onChange={(e) => setRoleFilter(e.target.value)}
-              className="px-4 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              className="clay-input rounded-2xl px-4 py-2.5 text-xs font-bold text-[#25243A] bg-white border border-[#E9E8F3] focus:outline-none"
             >
               <option value="">All Roles</option>
               <option value="job_seeker">Job Seeker</option>
@@ -66,9 +89,9 @@ export default function UsersManagement() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-4 py-2 border border-[#E2E8F0] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              className="clay-input rounded-2xl px-4 py-2.5 text-xs font-bold text-[#25243A] bg-white border border-[#E9E8F3] focus:outline-none"
             >
-              <option value="">All Status</option>
+              <option value="">All Statuses</option>
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
               <option value="suspended">Suspended</option>
@@ -76,75 +99,86 @@ export default function UsersManagement() {
           </div>
 
           {isLoading ? (
-            <div className="text-center py-12 text-[#64748B]">Loading users...</div>
+            <div className="text-center py-16">
+              <Spinner size="lg" />
+            </div>
           ) : users.length === 0 ? (
-            <div className="text-center py-12 text-[#64748B]">No users found</div>
+            <div className="py-12">
+              <EmptyState
+                icon={<Users className="w-12 h-12 text-[#6C5CE7]" />}
+                title="No Users Match Criteria"
+                description="Try clearing or modifying the search filters."
+              />
+            </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-[#F8FAFC] border-b border-[#E2E8F0]">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Role</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Status</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Joined</th>
-                    <th className="px-4 py-3 text-left text-sm font-semibold text-[#172033]">Actions</th>
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[#E9E8F3] text-[11px] font-bold uppercase tracking-wider text-[#6C6A84]">
+                    <th className="pb-3 px-4">User</th>
+                    <th className="pb-3 px-4">Role</th>
+                    <th className="pb-3 px-4">Status</th>
+                    <th className="pb-3 px-4">Joined</th>
+                    <th className="pb-3 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-[#E2E8F0]">
+                <tbody className="divide-y divide-[#F1F0F8] text-xs font-medium">
                   {users.map((user) => (
-                    <tr key={user._id} className="hover:bg-[#F8FAFC]">
-                      <td className="px-4 py-4 font-medium text-[#172033]">{user.name}</td>
-                      <td className="px-4 py-4 text-[#64748B]">{user.email}</td>
-                      <td className="px-4 py-4">
-                        <span className="px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                          {user.role.replace('_', ' ')}
+                    <tr key={user._id} className="hover:bg-[#FAF9FE] transition-colors">
+                      <td className="py-4 px-4">
+                        <div className="font-bold text-[#25243A] text-sm">{user.name}</div>
+                        <div className="text-[#6C6A84] text-xs">{user.email}</div>
+                      </td>
+                      <td className="py-4 px-4">
+                        <span className="inline-block px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EDE9FE] text-[#6C5CE7] border border-[#DDD6FE]">
+                          {user.role === 'job_seeker' ? 'Job Seeker' : user.role === 'employer' ? 'Employer' : 'Admin'}
                         </span>
                       </td>
-                      <td className="px-4 py-4">
+                      <td className="py-4 px-4">
                         <span
-                          className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          className={`inline-block px-2.5 py-1 rounded-full text-[11px] font-bold border ${
                             user.status === 'active'
-                              ? 'bg-green-100 text-green-800'
+                              ? 'bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]'
                               : user.status === 'suspended'
-                              ? 'bg-red-100 text-red-800'
-                              : 'bg-gray-100 text-gray-800'
+                              ? 'bg-[#FFE4E6] text-[#E11D48] border-[#FECDD3]'
+                              : 'bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]'
                           }`}
                         >
                           {user.status}
                         </span>
                       </td>
-                      <td className="px-4 py-4 text-[#64748B]">{new Date(user.createdAt).toLocaleDateString()}</td>
-                      <td className="px-4 py-4">
-                        <div className="flex gap-2">
+                      <td className="py-4 px-4 text-[#6C6A84]">
+                        {new Date(user.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-4 px-4 text-right">
+                        <div className="inline-flex items-center gap-2">
                           {user.status === 'active' ? (
                             <button
                               onClick={() => updateStatusMutation.mutate({ userId: user._id, status: 'suspended' })}
-                              className="text-orange-600 hover:text-orange-700"
-                              title="Suspend"
+                              className="p-2 rounded-xl bg-[#FEF3C7] text-[#D97706] hover:bg-[#FDE68A] transition-colors shadow-xs"
+                              title="Suspend User"
                             >
-                              <UserX className="w-5 h-5" />
+                              <UserX className="w-4 h-4" />
                             </button>
                           ) : (
                             <button
                               onClick={() => updateStatusMutation.mutate({ userId: user._id, status: 'active' })}
-                              className="text-green-600 hover:text-green-700"
-                              title="Activate"
+                              className="p-2 rounded-xl bg-[#DCFCE7] text-[#16A34A] hover:bg-[#BBF7D0] transition-colors shadow-xs"
+                              title="Activate User"
                             >
-                              <UserCheck className="w-5 h-5" />
+                              <UserCheck className="w-4 h-4" />
                             </button>
                           )}
                           <button
                             onClick={() => {
-                              if (confirm('Are you sure you want to delete this user?')) {
+                              if (confirm('Are you sure you want to permanently delete this user?')) {
                                 deleteUserMutation.mutate(user._id);
                               }
                             }}
-                            className="text-red-600 hover:text-red-700"
-                            title="Delete"
+                            className="p-2 rounded-xl bg-[#FFE4E6] text-[#E11D48] hover:bg-[#FECDD3] transition-colors shadow-xs"
+                            title="Delete User"
                           >
-                            <Trash2 className="w-5 h-5" />
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -154,7 +188,7 @@ export default function UsersManagement() {
               </table>
             </div>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

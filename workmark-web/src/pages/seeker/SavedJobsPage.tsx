@@ -10,7 +10,7 @@ import { Button } from '../../components/ui/Button';
 
 export const SavedJobsPage: React.FC = () => {
   const [page, setPage] = useState(1);
-  const [activeTab, setActiveTab] = useState<'all' | 'remote' | 'country'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'remote'>('all');
   const { data, isLoading } = useSavedJobs({ page, limit: 12 });
 
   const savedList = data?.data || [];
@@ -27,32 +27,30 @@ export const SavedJobsPage: React.FC = () => {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 animate-fadeIn">
         {/* Header Banner */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 sm:p-7 rounded-3xl border border-[#E2E8F0] shadow-xs">
+        <div className="clay-card p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="p-1.5 rounded-lg bg-amber-50 text-amber-600 border border-amber-200">
-                <Bookmark className="h-4 w-4 fill-current" />
-              </span>
-              <span className="text-xs font-bold uppercase tracking-wider text-amber-700">Career Vault</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#FFF7ED] text-[#EA580C] mb-2">
+              <Bookmark className="h-3.5 w-3.5 fill-current" />
+              Career Vault
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">Saved Opportunities</h1>
-            <p className="text-sm text-[#64748B] mt-1">
+            <h1 className="text-2xl sm:text-3xl font-black text-[#25243A] tracking-tight">Saved Opportunities</h1>
+            <p className="text-sm font-medium text-[#7E7C9A] mt-0.5">
               Keep track of high-potential positions and apply when ready ({data?.pagination?.total || 0} saved)
             </p>
           </div>
 
           {/* Quick Tab Switcher */}
           {savedList.length > 0 && (
-            <div className="flex items-center bg-[#F1F5F9] p-1 rounded-2xl border border-[#E2E8F0] self-start sm:self-auto">
+            <div className="flex items-center bg-slate-900/90 border border-white/10 p-1.5 rounded-2xl self-start sm:self-auto">
               <button
                 type="button"
                 onClick={() => setActiveTab('all')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer ${
                   activeTab === 'all'
-                    ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg shadow-cyan-500/25 scale-[1.02]'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
                 All ({savedList.length})
@@ -60,13 +58,13 @@ export const SavedJobsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setActiveTab('remote')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                className={`px-4 py-2 rounded-xl text-xs font-black transition-all cursor-pointer flex items-center gap-1.5 ${
                   activeTab === 'remote'
-                    ? 'bg-white text-[#0F172A] shadow-xs border border-[#E2E8F0]'
-                    : 'text-[#64748B] hover:text-[#0F172A]'
+                    ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg shadow-emerald-500/25 scale-[1.02]'
+                    : 'text-slate-400 hover:text-white'
                 }`}
               >
-                <Globe className="h-3.5 w-3.5 text-emerald-600" />
+                <Globe className="h-3.5 w-3.5" />
                 <span>Remote</span>
               </button>
             </div>
@@ -81,28 +79,28 @@ export const SavedJobsPage: React.FC = () => {
             ))}
           </div>
         ) : savedList.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-[#E2E8F0] p-12 text-center max-w-xl mx-auto shadow-xs">
-            <div className="h-16 w-16 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto mb-4 border border-blue-100">
+          <div className="genz-card p-12 text-center max-w-xl mx-auto">
+            <div className="h-16 w-16 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-400 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/20">
               <Bookmark className="h-8 w-8" />
             </div>
-            <h2 className="text-xl font-bold text-[#0F172A] mb-2">You haven't saved any opportunities yet</h2>
-            <p className="text-sm text-[#64748B] mb-6 max-w-sm mx-auto leading-relaxed">
-              Explore open roles matched to your location and profile, and bookmark the ones you'd like to revisit.
+            <h3 className="text-xl font-black text-white mb-2">No saved jobs yet</h3>
+            <p className="text-sm font-medium text-slate-400 mb-6">
+              Browse positions and bookmark them to keep track of deadlines and requirements.
             </p>
             <Link to="/jobs">
-              <Button size="lg" className="rounded-xl font-bold shadow-md shadow-blue-600/20">
+              <Button size="lg" variant="primary">
                 <Compass className="h-4 w-4 mr-2" />
                 <span>Explore Opportunities</span>
               </Button>
             </Link>
           </div>
         ) : filteredJobs.length === 0 ? (
-          <div className="bg-white rounded-3xl border border-[#E2E8F0] p-8 text-center shadow-xs">
-            <p className="text-sm font-semibold text-[#0F172A]">No saved jobs match this tab.</p>
+          <div className="clay-card p-8 text-center">
+            <p className="text-sm font-bold text-[#25243A]">No saved jobs match this tab filter.</p>
             <button
               type="button"
               onClick={() => setActiveTab('all')}
-              className="mt-3 text-xs font-bold text-blue-600 hover:underline cursor-pointer"
+              className="mt-3 text-xs font-black text-[#6C5CE7] hover:underline cursor-pointer"
             >
               Show all saved jobs
             </button>
@@ -117,7 +115,7 @@ export const SavedJobsPage: React.FC = () => {
             </div>
 
             {/* Pagination */}
-            {data && data.pagination.pages > 1 && (
+            {data && data.pagination && data.pagination.pages > 1 && (
               <div className="mt-8">
                 <Pagination
                   currentPage={page}

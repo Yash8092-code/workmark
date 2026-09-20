@@ -205,65 +205,15 @@ export const matchesJobFilter = (job: any, criteria: JobFilterCriteria): boolean
   return true;
 };
 
+import { calculateOpportunityIntelligence } from '../services/opportunity.service';
+
 /**
- * Deterministic recommendation scoring system (0 - 100)
+ * Deterministic recommendation scoring system (0 - 100) using Opportunity Intelligence Engine
  */
-export const calculateJobMatchScore = (job: any, user?: any): number => {
+export const calculateJobMatchScore = (job: any, user?: any, profile?: any): number => {
   if (!user) return 0;
-
-  let score = 0;
-  let hasSignals = false;
-
-  // 1. Country match (+30)
-  if (user.countryCode && job.countryCode) {
-    hasSignals = true;
-    if (user.countryCode.toLowerCase() === job.countryCode.toLowerCase()) {
-      score += 30;
-    }
-  }
-
-  // 2. Category match (+20)
-  const userCategories = user.jobAlertPreferences?.categories?.map((c: string) => c.toLowerCase()) || [];
-  if (userCategories.length > 0 && job.category) {
-    hasSignals = true;
-    if (userCategories.includes(job.category.toLowerCase())) {
-      score += 20;
-    }
-  }
-
-  // 3. Work mode match (+15)
-  const userWorkModes = user.jobAlertPreferences?.workModes?.map((w: string) => w.toLowerCase()) || [];
-  if (userWorkModes.length > 0 && job.workMode) {
-    hasSignals = true;
-    if (userWorkModes.includes(job.workMode.toLowerCase())) {
-      score += 15;
-    }
-  }
-
-  // 4. Experience match (+15)
-  const userExpLevels = user.jobAlertPreferences?.experienceLevels?.map((e: string) => e.toLowerCase()) || [];
-  if (userExpLevels.length > 0 && job.experienceLevel) {
-    hasSignals = true;
-    if (userExpLevels.includes(job.experienceLevel.toLowerCase())) {
-      score += 15;
-    }
-  }
-
-  // 5. Skill overlap (+20)
-  const userKeywords = user.jobAlertPreferences?.keywords?.map((k: string) => k.toLowerCase()) || [];
-  if (userKeywords.length > 0) {
-    hasSignals = true;
-    const jobSkills = (job.skills || []).map((s: string) => s.toLowerCase());
-    const jobText = `${job.title || ''} ${job.description || ''}`.toLowerCase();
-    const matchingSkills = userKeywords.filter(
-      (kw: string) => jobSkills.includes(kw) || jobText.includes(kw)
-    );
-    if (matchingSkills.length > 0) {
-      score += Math.min(20, Math.round((matchingSkills.length / userKeywords.length) * 20));
-    }
-  }
-
-  return hasSignals ? Math.min(100, Math.max(0, score)) : 0;
+  const intel = calculateOpportunityIntelligence(job, user, profile);
+  return intel.score;
 };
 
 interface PaginationOptions {

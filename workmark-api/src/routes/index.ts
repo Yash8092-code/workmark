@@ -9,6 +9,7 @@ import notificationRoutes from './notification.routes';
 import adminRoutes from './admin.routes';
 import reportRoutes from './report.routes';
 import emailRoutes from './email.routes';
+import dashboardRoutes from './dashboard.routes';
 
 const router = Router();
 
@@ -22,6 +23,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/admin', adminRoutes);
 router.use('/reports', reportRoutes);
 router.use('/email', emailRoutes);
+router.use('/dashboard', dashboardRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({

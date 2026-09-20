@@ -135,4 +135,61 @@ test.describe('Workmark Intelligent Job Filters & Discovery', () => {
     await expect(page.locator('text=Category: Engineering')).toHaveCount(0);
     await expect(page.locator('text=Mode: remote')).toHaveCount(0);
   });
+
+  test('8. Manual location input: custom city typing, URL sync and chip removal', async ({ page }) => {
+    await page.goto('/jobs?country=in');
+    await page.waitForLoadState('networkidle');
+
+    await openFilterDrawerIfMobile(page);
+
+    const filterArea = getFilterContainer(page);
+    const cityInput = filterArea.locator('input[placeholder*="Bangalore"]').first();
+    
+    // Type manual custom location
+    await cityInput.fill('Kolkata');
+    await applyMobileDrawerIfOpen(page);
+
+    await expect(page).toHaveURL(/city=Kolkata/);
+    await expect(page.locator('text=Location: Kolkata').first()).toBeVisible();
+
+    // Verify persistence after page reload
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+    await expect(page).toHaveURL(/city=Kolkata/);
+    await expect(page.locator('text=Location: Kolkata').first()).toBeVisible();
+
+    // Remove location filter chip
+    const removeLocationChip = page.locator('.inline-flex:has-text("Location: Kolkata") button');
+    if (await removeLocationChip.isVisible()) {
+      await removeLocationChip.click();
+      await expect(page).not.toHaveURL(/city=Kolkata/);
+      await expect(page.locator('text=Location: Kolkata')).toHaveCount(0);
+    }
+  });
+
+  test('9. Salary range and disclosed filters URL sync', async ({ page }) => {
+    await page.goto('/jobs');
+    await page.waitForLoadState('networkidle');
+
+    await openFilterDrawerIfMobile(page);
+
+    const filterArea = getFilterContainer(page);
+    const minSalaryInput = filterArea.locator('input[placeholder="Min amount"]').first();
+    await minSalaryInput.fill('50000');
+
+    await applyMobileDrawerIfOpen(page);
+
+    await expect(page).toHaveURL(/salaryMin=50000/);
+    await expect(page.locator('text=Salary: $50000').first()).toBeVisible();
+  });
+
+  test('10. Employment Type and Source filter verification', async ({ page }) => {
+    await page.goto('/jobs?employmentType=full-time&source=workmark');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('text=Type: full-time').first()).toBeVisible();
+    await expect(page.locator('text=Source: Workmark').first()).toBeVisible();
+    await expect(page).toHaveURL(/employmentType=full-time/);
+    await expect(page).toHaveURL(/source=workmark/);
+  });
 });

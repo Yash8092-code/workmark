@@ -2,7 +2,7 @@ import React from 'react';
 import { Modal } from './Modal';
 import { Button } from './Button';
 
-interface ConfirmDialogProps {
+export interface ConfirmDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm: () => void;
@@ -27,9 +27,9 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={title} size="sm">
-      <div className="space-y-4">
-        <p className="text-[#64748B]">{message}</p>
-        <div className="flex justify-end space-x-3">
+      <div className="space-y-6">
+        <p className="text-sm sm:text-base text-[#6F6D82] leading-relaxed">{message}</p>
+        <div className="flex justify-end gap-3 pt-2">
           <Button variant="outline" onClick={onClose} disabled={loading}>
             {cancelText}
           </Button>
@@ -45,3 +45,5 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     </Modal>
   );
 };
+
+export default ConfirmDialog;

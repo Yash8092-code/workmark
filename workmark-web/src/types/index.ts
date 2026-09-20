@@ -6,6 +6,9 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  username?: string;
+  mobileNumber?: string;
+  domains?: string[];
   role: UserRole;
   status?: UserStatus;
   avatar?: string;
@@ -45,7 +48,9 @@ export interface Profile {
   education: Education[];
   projects: Project[];
   resume?: string;
+  resumeUrl?: string;
   avatar?: string;
+  avatarUrl?: string;
   socialLinks: SocialLinks;
   createdAt: string;
   updatedAt: string;
@@ -98,11 +103,14 @@ export interface Company {
   description?: string;
   industry?: string;
   size?: string;
+  companySize?: string;
   foundedYear?: number;
   location?: string;
   website?: string;
   logo?: string;
+  logoUrl?: string;
   coverImage?: string;
+  coverUrl?: string;
   verified: boolean;
   createdAt: string;
   updatedAt: string;
@@ -113,6 +121,33 @@ export type EmploymentType = 'full-time' | 'part-time' | 'contract' | 'internshi
 export type WorkMode = 'remote' | 'onsite' | 'hybrid' | 'unknown';
 export type ExperienceLevel = 'entry' | 'mid' | 'senior' | 'lead';
 export type JobStatus = 'active' | 'closed' | 'draft';
+
+export type MatchTier = 'Strong Match' | 'Good Match' | 'Worth Exploring' | 'Low Match';
+export type OpportunityTag = 'Skill Stretch' | 'Remote' | 'Global' | 'Fresh';
+export type MatchConfidence = 'High confidence' | 'Moderate confidence' | 'Limited data';
+
+export interface OpportunityExplanation {
+  score: number;
+  matchTier: MatchTier;
+  matchConfidence: MatchConfidence;
+  tags: OpportunityTag[];
+  matchingSkills: string[];
+  missingSkills: string[];
+  allCandidateSkills: string[];
+  allJobSkills: string[];
+  fitSignals: string[];
+  gaps: string[];
+  salaryFit: {
+    status: 'compatible' | 'below' | 'undisclosed';
+    label: string;
+    details?: string;
+  };
+  applicationGuidance: {
+    status: 'recommended' | 'skill_stretch' | 'consider_gaps';
+    headline: string;
+    summary: string;
+  };
+}
 
 export interface Job {
   _id: string;
@@ -150,20 +185,59 @@ export interface Job {
   salaryIsPredicted?: boolean;
   salary?: { min?: number; max?: number; currency?: string };
   matchScore?: number;
+  opportunityIntelligence?: OpportunityExplanation;
+  newApplicationsCount?: number;
+  stageCounts?: {
+    pending: number;
+    reviewed: number;
+    shortlisted: number;
+    interview: number;
+    accepted: number;
+    rejected: number;
+  };
 }
 
 // Application types
-export type ApplicationStatus = 'applied' | 'under_review' | 'shortlisted' | 'interview' | 'selected' | 'rejected';
+export type CanonicalApplicationStatus = 'pending' | 'reviewed' | 'shortlisted' | 'interview' | 'accepted' | 'rejected';
+export type ApplicationStatus = CanonicalApplicationStatus | 'applied' | 'under_review' | 'selected';
+
+export interface InterviewInfo {
+  status?: 'scheduled' | 'rescheduled' | 'cancelled' | 'completed';
+  scheduledAt?: string;
+  date?: string;
+  time?: string;
+  mode?: 'video' | 'phone' | 'onsite';
+  locationOrLink?: string;
+  link?: string;
+  message?: string;
+  notes?: string;
+  cancelledReason?: string;
+}
 
 export interface Application {
   _id: string;
   jobId: Job;
-  userId: User;
-  profileId: string;
+  applicantId?: User;
+  userId?: User;
+  employerId?: User;
+  profileId?: string | Profile;
+  profile?: Profile;
+  seekerProfile?: Profile;
   coverLetter?: string;
-  resume: string;
+  resumeUrl?: string;
+  resume?: string;
   status: ApplicationStatus;
+  isViewedByEmployer?: boolean;
+  appliedAt?: string;
+  reviewedAt?: string;
+  shortlistedAt?: string;
+  interviewAt?: string;
+  acceptedAt?: string;
+  rejectedAt?: string;
+  interview?: InterviewInfo;
   statusHistory: StatusHistory[];
+  matchScore?: number;
+  opportunityIntelligence?: OpportunityExplanation;
   notes?: string;
   createdAt: string;
   updatedAt: string;
@@ -191,7 +265,9 @@ export interface Notification {
   type: string;
   title: string;
   message: string;
-  read: boolean;
+  read?: boolean;
+  isRead?: boolean;
+  link?: string;
   relatedId?: string;
   relatedModel?: string;
   createdAt: string;
@@ -229,18 +305,24 @@ export interface ResendOTPInput {
 }
 
 export interface LoginInput {
-  email: string;
+  identifier?: string;
+  email?: string;
+  username?: string;
   password: string;
 }
 
 export interface RegisterInput {
   name: string;
   email: string;
+  mobileNumber: string;
+  username: string;
   password: string;
-  role: UserRole;
+  confirmPassword?: string;
+  role?: UserRole;
   companyName?: string;
-  countryCode?: string;
+  countryCode: string;
   countryName?: string;
+  domains: string[];
 }
 
 // API Response types
@@ -307,9 +389,12 @@ export interface CompanyFormData {
   description?: string;
   industry?: string;
   size?: string;
+  companySize?: string;
   foundedYear?: number;
   location?: string;
   website?: string;
+  logo?: string;
+  coverImage?: string;
 }
 
 export interface JobFormData {
@@ -331,7 +416,101 @@ export interface JobFormData {
   status: JobStatus;
 }
 
-// Admin Dashboard Stats
+export interface SeekerDashboardResponse {
+  profileReadiness: {
+    percentage: number;
+    completedItems: string[];
+    missingItems: string[];
+  };
+  metrics: {
+    activeApplications: number;
+    savedJobs: number;
+    strongMatchesCount: number;
+    shortlistedCount: number;
+  };
+  pipeline: {
+    pending: number;
+    reviewed: number;
+    shortlisted: number;
+    interview: number;
+    accepted: number;
+    rejected: number;
+  };
+  recommendations: {
+    strongMatches: Job[];
+    skillStretch: Job[];
+    remoteAndGlobal: Job[];
+    recentlyAdded: Job[];
+  };
+  skillInsights: {
+    userSkills: string[];
+    inDemandSkills: { skill: string; jobCount: number }[];
+    marketContext: string;
+  };
+  recentActivity: {
+    id: string;
+    type: 'application_submitted' | 'job_saved' | 'status_updated' | 'notification';
+    title: string;
+    description: string;
+    timestamp: string;
+    link?: string;
+  }[];
+}
+
+export interface EmployerDashboardResponse {
+  companyReadiness: {
+    percentage: number;
+    completedItems: string[];
+    missingItems: string[];
+  };
+  metrics: {
+    activeJobs: number;
+    totalApplications: number;
+    candidatesToReview: number;
+    shortlistedCandidates: number;
+    interviewCandidates?: number;
+    hiresCount: number;
+  };
+  pipeline: {
+    pending: number;
+    reviewed: number;
+    shortlisted: number;
+    interview: number;
+    accepted: number;
+    rejected: number;
+  };
+  candidatesNeedingAttention: {
+    applicationId: string;
+    applicantId: string;
+    applicantName: string;
+    applicantEmail: string;
+    applicantPhone?: string;
+    applicantAvatar?: string;
+    jobId: string;
+    jobTitle: string;
+    appliedAt: string;
+    status: CanonicalApplicationStatus;
+    isViewedByEmployer?: boolean;
+    matchScore?: number;
+    skills: string[];
+  }[];
+  jobPerformance: {
+    jobId: string;
+    title: string;
+    location: string;
+    workMode: string;
+    status: 'active' | 'draft' | 'closed' | 'expired';
+    applicationsCount: number;
+    viewsCount: number;
+    conversionRate?: number;
+    createdAt: string;
+  }[];
+  recruitmentInsights: {
+    hasEnoughData: boolean;
+    insights: string[];
+  };
+}
+
 export interface AdminStats {
   totalUsers: number;
   totalJobs: number;

@@ -56,18 +56,16 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   ].filter(Boolean).length;
 
   const categories = [
-    'Engineering',
+    'Software Development',
+    'Data Science',
     'Design',
-    'Product',
-    'Data',
     'Marketing',
     'Sales',
     'Finance',
-    'HR',
-    'Operations',
-    'Healthcare',
+    'Human Resources',
     'Customer Support',
-    'Other',
+    'Product Management',
+    'Operations',
   ];
 
   const employmentTypes: { value: EmploymentType; label: string }[] = [
@@ -94,14 +92,14 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
   const suggestedCities = getSuggestedCities(filters.country);
 
   return (
-    <div className={`bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-6 ${className}`}>
+    <div className={`clay-card p-6 space-y-6 ${className}`}>
       {/* Filter Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-[#F1F5F9]">
+      <div className="flex items-center justify-between pb-4 border-b border-[#E6E8F2]">
         <div className="flex items-center gap-2">
-          <SlidersHorizontal className="h-4 w-4 text-[#2563EB]" />
-          <h3 className="font-bold text-[#0F172A] text-base">Filter Opportunities</h3>
+          <SlidersHorizontal className="h-4 w-4 text-[#6C5CE7]" />
+          <h3 className="font-black text-[#25243A] text-base">Filter Vacancies</h3>
           {activeCount > 0 && (
-            <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-[#2563EB] text-white">
+            <span className="px-2 py-0.5 rounded-full text-xs font-black bg-[#6C5CE7] text-white shadow-xs">
               {activeCount}
             </span>
           )}
@@ -110,23 +108,23 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
           <button
             type="button"
             onClick={onClear}
-            className="inline-flex items-center gap-1 text-xs font-semibold text-[#64748B] hover:text-[#DC2626] transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1 text-xs font-bold text-[#7E7C9A] hover:text-[#FF6B81] transition-colors cursor-pointer"
           >
             <RotateCcw className="h-3 w-3" />
-            <span>Reset All</span>
+            <span>Reset</span>
           </button>
         )}
       </div>
 
       {/* Target Country */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center justify-between">
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center justify-between">
           <span>Target Country</span>
           {filters.country && filters.country !== 'all' && (
             <button
               type="button"
               onClick={() => updateFilter('country', undefined)}
-              className="text-[11px] font-medium text-[#2563EB] hover:underline"
+              className="text-[11px] font-bold text-[#6C5CE7] hover:underline"
             >
               Reset to Worldwide
             </button>
@@ -144,16 +142,18 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* City / Region Search + Quick Suggestions */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center justify-between">
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 text-[#94A3B8]" />
-            <span>City or Region</span>
+            <MapPin className="h-3.5 w-3.5 text-[#6C5CE7]" />
+            <span>City or Location</span>
           </span>
-          {filters.city && (
+          {(filters.city || filters.location) && (
             <button
               type="button"
-              onClick={() => updateFilter('city', undefined)}
-              className="text-[11px] font-medium text-[#2563EB] hover:underline"
+              onClick={() => {
+                onFiltersChange({ ...filters, city: undefined, location: undefined });
+              }}
+              className="text-[11px] font-bold text-[#6C5CE7] hover:underline cursor-pointer"
             >
               Clear
             </button>
@@ -161,14 +161,13 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
         </label>
         <Input
           type="text"
-          placeholder="e.g. Bangalore, London, New York..."
+          placeholder="e.g. Bengaluru, London, Berlin..."
           value={filters.city || filters.location || ''}
           onChange={(e) => {
             const val = e.target.value || undefined;
-            updateFilter('city', val);
-            updateFilter('location', val);
+            onFiltersChange({ ...filters, city: val, location: val });
           }}
-          className="text-xs py-2 rounded-xl"
+          className="text-xs"
         />
         {/* Dynamic city suggestions based on country */}
         {suggestedCities.length > 0 && (
@@ -181,13 +180,12 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                   type="button"
                   onClick={() => {
                     const nextVal = isSelected ? undefined : cityName;
-                    updateFilter('city', nextVal);
-                    updateFilter('location', nextVal);
+                    onFiltersChange({ ...filters, city: nextVal, location: nextVal });
                   }}
-                  className={`px-2 py-0.5 rounded-md text-[11px] font-medium border transition-colors cursor-pointer ${
+                  className={`px-2.5 py-0.5 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer ${
                     isSelected
-                      ? 'bg-[#2563EB] text-white border-[#2563EB]'
-                      : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#F1F5F9] hover:text-[#0F172A]'
+                      ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-xs'
+                      : 'bg-[#F7F7FB] text-[#7E7C9A] border-[#E6E8F2] hover:bg-[#EDE9FE]/50 hover:text-[#6C5CE7]'
                   }`}
                 >
                   {cityName}
@@ -200,10 +198,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Work Mode Filter */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2.5">
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2.5">
           Work Mode
         </label>
-        <div className="grid grid-cols-3 gap-1.5">
+        <div className="grid grid-cols-3 gap-2">
           {workModes.map((mode) => {
             const isSelected = filters.workMode?.includes(mode.value);
             return (
@@ -211,10 +209,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 key={mode.value}
                 type="button"
                 onClick={() => toggleArrayFilter('workMode', mode.value)}
-                className={`py-2 px-2 rounded-xl text-xs font-medium border flex flex-col items-center justify-center gap-1 transition-all duration-150 cursor-pointer ${
+                className={`py-2 px-2 rounded-xl text-xs font-bold border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#2563EB]/10 border-[#2563EB] text-[#2563EB] font-bold shadow-xs'
-                    : 'bg-white border-[#E2E8F0] text-[#64748B] hover:border-[#CBD5E1] hover:text-[#0F172A]'
+                    ? 'bg-[#EDE9FE] border-[#6C5CE7] text-[#6C5CE7] shadow-sm scale-105'
+                    : 'bg-[#F7F7FB] border-[#E6E8F2] text-[#7E7C9A] hover:border-[#6C5CE7] hover:text-[#25243A]'
                 }`}
               >
                 <span className="text-base leading-none">{mode.icon}</span>
@@ -227,18 +225,18 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Job Category */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center gap-1.5">
-          <Layers className="h-3.5 w-3.5 text-[#94A3B8]" />
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center gap-1.5">
+          <Layers className="h-3.5 w-3.5 text-[#6C5CE7]" />
           <span>Category</span>
         </label>
         <div className="flex flex-wrap gap-1.5 max-h-44 overflow-y-auto pr-1">
           <button
             type="button"
             onClick={() => updateFilter('category', undefined)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+            className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               !filters.category
-                ? 'bg-[#0F172A] text-white border-[#0F172A] font-bold'
-                : 'bg-white text-[#64748B] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                ? 'bg-[#25243A] text-white border-[#25243A] shadow-sm'
+                : 'bg-[#F7F7FB] text-[#7E7C9A] border-[#E6E8F2] hover:bg-white hover:text-[#25243A]'
             }`}
           >
             All
@@ -250,10 +248,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 key={cat}
                 type="button"
                 onClick={() => updateFilter('category', isSelected ? undefined : cat)}
-                className={`px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors cursor-pointer ${
+                className={`px-3 py-1 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#2563EB] text-white border-[#2563EB] font-semibold shadow-xs'
-                    : 'bg-white text-[#64748B] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-sm'
+                    : 'bg-[#F7F7FB] text-[#7E7C9A] border-[#E6E8F2] hover:bg-white hover:text-[#25243A]'
                 }`}
               >
                 {cat}
@@ -265,8 +263,8 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Employment Type */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center gap-1.5">
-          <Briefcase className="h-3.5 w-3.5 text-[#94A3B8]" />
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center gap-1.5">
+          <Briefcase className="h-3.5 w-3.5 text-[#6C5CE7]" />
           <span>Employment Type</span>
         </label>
         <div className="space-y-1.5">
@@ -275,15 +273,15 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
             return (
               <label
                 key={type.value}
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F8FAFC] cursor-pointer text-xs text-[#334155] transition-colors"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-[#EDE9FE]/30 cursor-pointer text-xs font-bold text-[#25243A] transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => toggleArrayFilter('employmentType', type.value)}
-                  className="h-4 w-4 text-[#2563EB] border-[#CBD5E1] rounded focus:ring-[#2563EB] cursor-pointer"
+                  className="h-4 w-4 text-[#6C5CE7] border-[#E6E8F2] rounded focus:ring-[#6C5CE7] cursor-pointer"
                 />
-                <span className={isChecked ? 'font-semibold text-[#0F172A]' : ''}>{type.label}</span>
+                <span>{type.label}</span>
               </label>
             );
           })}
@@ -292,7 +290,7 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Experience Level */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2">
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2">
           Experience Level
         </label>
         <div className="space-y-1.5">
@@ -301,15 +299,15 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
             return (
               <label
                 key={lvl.value}
-                className="flex items-center gap-2.5 px-2 py-1.5 rounded-lg hover:bg-[#F8FAFC] cursor-pointer text-xs text-[#334155] transition-colors"
+                className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-[#EDE9FE]/30 cursor-pointer text-xs font-bold text-[#25243A] transition-colors"
               >
                 <input
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => toggleArrayFilter('experienceLevel', lvl.value)}
-                  className="h-4 w-4 text-[#2563EB] border-[#CBD5E1] rounded focus:ring-[#2563EB] cursor-pointer"
+                  className="h-4 w-4 text-[#6C5CE7] border-[#E6E8F2] rounded focus:ring-[#6C5CE7] cursor-pointer"
                 />
-                <span className={isChecked ? 'font-semibold text-[#0F172A]' : ''}>{lvl.label}</span>
+                <span>{lvl.label}</span>
               </label>
             );
           })}
@@ -318,17 +316,17 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Salary Filter */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center justify-between">
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center justify-between">
           <span className="flex items-center gap-1.5">
-            <DollarSign className="h-3.5 w-3.5 text-[#94A3B8]" />
+            <DollarSign className="h-3.5 w-3.5 text-[#6C5CE7]" />
             <span>Compensation</span>
           </span>
-          <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-normal text-[#64748B]">
+          <label className="flex items-center gap-1.5 cursor-pointer text-[11px] font-bold text-[#7E7C9A]">
             <input
               type="checkbox"
               checked={filters.salaryDisclosed || false}
               onChange={(e) => updateFilter('salaryDisclosed', e.target.checked || undefined)}
-              className="h-3.5 w-3.5 text-[#2563EB] rounded border-[#CBD5E1]"
+              className="h-3.5 w-3.5 text-[#6C5CE7] rounded border-[#E6E8F2]"
             />
             <span>Disclosed only</span>
           </label>
@@ -336,25 +334,25 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
         <div className="grid grid-cols-2 gap-2">
           <Input
             type="number"
-            placeholder="Min amount"
+            placeholder="Min"
             value={filters.salaryMin || ''}
             onChange={(e) => updateFilter('salaryMin', e.target.value ? Number(e.target.value) : undefined)}
-            className="text-xs py-2 rounded-xl"
+            className="text-xs"
           />
           <Input
             type="number"
-            placeholder="Max amount"
+            placeholder="Max"
             value={filters.salaryMax || ''}
             onChange={(e) => updateFilter('salaryMax', e.target.value ? Number(e.target.value) : undefined)}
-            className="text-xs py-2 rounded-xl"
+            className="text-xs"
           />
         </div>
       </div>
 
       {/* Source Selection */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center gap-1.5">
-          <Building className="h-3.5 w-3.5 text-[#94A3B8]" />
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center gap-1.5">
+          <Building className="h-3.5 w-3.5 text-[#6C5CE7]" />
           <span>Job Source</span>
         </label>
         <div className="grid grid-cols-3 gap-1.5">
@@ -369,10 +367,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 key={src.label}
                 type="button"
                 onClick={() => updateFilter('source', src.value)}
-                className={`py-1.5 px-2 rounded-xl text-xs font-medium border text-center transition-colors cursor-pointer ${
+                className={`py-2 px-2 rounded-xl text-xs font-bold border text-center transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#2563EB] text-white border-[#2563EB] font-bold shadow-xs'
-                    : 'bg-white border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#6C5CE7] text-white border-[#6C5CE7] shadow-sm'
+                    : 'bg-[#F7F7FB] border-[#E6E8F2] text-[#7E7C9A] hover:bg-white hover:text-[#25243A]'
                 }`}
               >
                 {src.label}
@@ -384,8 +382,8 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
 
       {/* Date Posted */}
       <div>
-        <label className="block text-xs font-bold uppercase tracking-wider text-[#475569] mb-2 flex items-center gap-1.5">
-          <Calendar className="h-3.5 w-3.5 text-[#94A3B8]" />
+        <label className="block text-xs font-black uppercase tracking-wider text-[#7E7C9A] mb-2 flex items-center gap-1.5">
+          <Calendar className="h-3.5 w-3.5 text-[#6C5CE7]" />
           <span>Date Posted</span>
         </label>
         <div className="grid grid-cols-2 gap-1.5">
@@ -402,10 +400,10 @@ export const JobFilters: React.FC<JobFiltersProps> = ({
                 key={item.label}
                 type="button"
                 onClick={() => updateFilter('datePosted', item.value)}
-                className={`py-1.5 px-2 rounded-xl text-xs font-medium border text-center transition-colors cursor-pointer ${
+                className={`py-2 px-2 rounded-xl text-xs font-bold border text-center transition-all cursor-pointer ${
                   isSelected
-                    ? 'bg-[#0F172A] text-white border-[#0F172A] font-bold shadow-xs'
-                    : 'bg-white border-[#E2E8F0] text-[#64748B] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#25243A] text-white border-[#25243A] shadow-sm'
+                    : 'bg-[#F7F7FB] border-[#E6E8F2] text-[#7E7C9A] hover:bg-white hover:text-[#25243A]'
                 }`}
               >
                 {item.label}

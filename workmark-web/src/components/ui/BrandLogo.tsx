@@ -37,8 +37,8 @@ export const BrandLogo: React.FC<BrandLogoProps> = ({
 
       {/* Brand Text */}
       {showText && (
-        <span className={`${textSizes[size]} font-extrabold tracking-tight text-[#0F172A]`}>
-          WORK<span className="text-[#2563EB]">MARK</span>
+        <span className={`${textSizes[size]} font-extrabold tracking-tight text-white flex items-center`}>
+          WORK<span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-500">MARK</span>
         </span>
       )}
     </div>

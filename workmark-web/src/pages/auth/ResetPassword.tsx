@@ -3,17 +3,16 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { CheckCircle2, KeyRound, AlertCircle } from 'lucide-react';
+import { CheckCircle2, KeyRound, AlertCircle, ArrowRight, Lock } from 'lucide-react';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
-import { Card } from '../../components/ui/Card';
 import { resetPassword } from '../../api/auth';
 import toast from 'react-hot-toast';
 
 const resetPasswordSchema = z
   .object({
     password: z.string().min(6, 'Password must be at least 6 characters'),
-    confirmPassword: z.string().min(6, 'Please confirm your password'),
+    confirmPassword: z.string().min(1, 'Please confirm your password'),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -58,22 +57,20 @@ export const ResetPassword: React.FC = () => {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <Card>
-            <Card.Body className="text-center p-8">
-              <div className="w-16 h-16 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-4 text-amber-600">
-                <AlertCircle className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-[#172033] mb-2">Invalid Reset Link</h2>
-              <p className="text-[#64748B] mb-6">
-                This password reset link is invalid or incomplete. Please request a new link from the forgot password page.
-              </p>
-              <Button onClick={() => navigate('/forgot-password')} className="w-full">
-                Request New Link
-              </Button>
-            </Card.Body>
-          </Card>
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden bg-[#090D16]">
+        <div className="relative z-10 w-full max-w-md">
+          <div className="genz-card p-8 text-center backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+            <div className="w-16 h-16 bg-amber-500/10 border border-amber-500/25 rounded-2xl flex items-center justify-center mx-auto mb-4 text-amber-400 shadow-[0_0_20px_rgba(245,158,11,0.2)]">
+              <AlertCircle className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">Invalid Reset Link</h2>
+            <p className="text-slate-400 text-sm font-medium mb-6">
+              This password reset link is invalid or expired. Please request a new recovery link.
+            </p>
+            <Button variant="primary" onClick={() => navigate('/forgot-password')} className="w-full">
+              Request New Link
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -81,67 +78,74 @@ export const ResetPassword: React.FC = () => {
 
   if (isSuccess) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
-          <Card>
-            <Card.Body className="text-center p-8">
-              <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4 text-green-600">
-                <CheckCircle2 className="w-8 h-8" />
-              </div>
-              <h2 className="text-2xl font-bold text-[#172033] mb-2">Password Reset Complete</h2>
-              <p className="text-[#64748B] mb-6">
-                Your password has been successfully updated. You can now sign in with your new credentials.
-              </p>
-              <Button onClick={() => navigate('/login')} className="w-full">
-                Sign In to Workmark
-              </Button>
-            </Card.Body>
-          </Card>
+      <div className="relative min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden bg-[#090D16]">
+        <div className="relative z-10 w-full max-w-md">
+          <div className="genz-card p-8 text-center backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+            <div className="w-16 h-16 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl flex items-center justify-center mx-auto mb-4 text-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
+              <CheckCircle2 className="w-8 h-8" />
+            </div>
+            <h2 className="text-2xl font-black text-white mb-2">Password Updated</h2>
+            <p className="text-slate-400 text-sm font-medium mb-6">
+              Your password has been reset successfully. You can now sign in with your updated credentials.
+            </p>
+            <Button variant="primary" onClick={() => navigate('/login')} className="w-full">
+              <span>Sign In to Workmark</span>
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </Button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
+    <div className="relative min-h-screen flex items-center justify-center px-4 py-16 overflow-hidden bg-[#090D16]">
+      <div className="absolute top-1/4 -left-20 w-96 h-96 bg-blue-500/15 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/4 -right-20 w-96 h-96 bg-indigo-500/15 rounded-full blur-[120px] pointer-events-none" />
+
+      <div className="relative z-10 w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-blue-50 border border-blue-100 rounded-full flex items-center justify-center mx-auto mb-4 text-[#2563EB]">
+          <div className="w-14 h-14 bg-blue-500/10 border border-blue-500/25 rounded-2xl flex items-center justify-center mx-auto mb-3 text-cyan-400 shadow-[0_0_20px_rgba(56,189,248,0.2)]">
             <KeyRound className="h-7 w-7" />
           </div>
-          <h1 className="text-3xl font-bold text-[#172033] mb-2">Create New Password</h1>
-          <p className="text-[#64748B]">Please enter and confirm your new password below</p>
+          <h1 className="text-3xl font-black text-white tracking-tight">Create New Password</h1>
+          <p className="text-slate-400 text-sm font-medium mt-1">Please choose a strong, secure new password</p>
         </div>
 
-        <Card>
-          <Card.Body className="p-8">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-              <Input
-                label="New Password"
-                type="password"
-                placeholder="Enter at least 6 characters"
-                error={errors.password?.message}
-                {...register('password')}
-              />
+        <div className="genz-card p-6 sm:p-8 backdrop-blur-xl border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <Input
+              label="New Password"
+              type="password"
+              placeholder="Enter at least 6 characters"
+              icon={<Lock className="w-4 h-4 text-slate-400" />}
+              error={errors.password?.message}
+              {...register('password')}
+            />
 
-              <Input
-                label="Confirm New Password"
-                type="password"
-                placeholder="Re-enter your new password"
-                error={errors.confirmPassword?.message}
-                {...register('confirmPassword')}
-              />
+            <Input
+              label="Confirm New Password"
+              type="password"
+              placeholder="Re-enter your new password"
+              icon={<Lock className="w-4 h-4 text-slate-400" />}
+              error={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+            />
 
-              <Button type="submit" className="w-full" loading={isLoading}>
-                Update Password
-              </Button>
-            </form>
-          </Card.Body>
-        </Card>
+            <Button
+              type="submit"
+              variant="primary"
+              className="w-full py-3.5 shadow-lg shadow-blue-500/25 font-bold cursor-pointer mt-2"
+              loading={isLoading}
+            >
+              Update Password
+            </Button>
+          </form>
+        </div>
 
-        <p className="text-center text-[#64748B] mt-6 text-sm">
-          Remembered your credentials?{' '}
-          <Link to="/login" className="text-[#2563EB] hover:text-[#1d4ed8] font-medium">
+        <p className="text-center text-slate-400 mt-6 text-sm font-medium">
+          Remember your credentials?{' '}
+          <Link to="/login" className="text-cyan-400 hover:text-cyan-300 font-bold hover:underline ml-1">
             Sign In
           </Link>
         </p>
@@ -149,4 +153,5 @@ export const ResetPassword: React.FC = () => {
     </div>
   );
 };
+
 export default ResetPassword;

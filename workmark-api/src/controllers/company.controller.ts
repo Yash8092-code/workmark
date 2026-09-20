@@ -21,8 +21,12 @@ export const createCompany = asyncHandler(async (req: Request, res: Response) =>
     slug = `${slug}-${Date.now()}`;
   }
 
+  const companySize = req.body.companySize || req.body.size;
+
   const company = await Company.create({
     ...req.body,
+    companySize,
+    size: companySize,
     ownerId: req.user._id,
     slug,
   });
@@ -97,9 +101,21 @@ export const updateCompany = asyncHandler(async (req: Request, res: Response) =>
     throw new AppError('Not authorized to update this company', 403);
   }
 
+  const companySize = req.body.companySize || req.body.size;
+  const updateData: any = {
+    ...req.body,
+    ...(companySize ? { companySize, size: companySize } : {}),
+  };
+
+  if (req.body.foundedYear === '' || req.body.foundedYear === null) {
+    updateData.foundedYear = undefined;
+  } else if (req.body.foundedYear !== undefined) {
+    updateData.foundedYear = Number(req.body.foundedYear);
+  }
+
   const updatedCompany = await Company.findByIdAndUpdate(
     id,
-    { $set: req.body },
+    { $set: updateData },
     { new: true, runValidators: true }
   );
 

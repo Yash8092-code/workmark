@@ -16,6 +16,27 @@ const userSchema = new Schema<IUser>(
       lowercase: true,
       trim: true,
     },
+    username: {
+      type: String,
+      required: [true, 'Username is required'],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      minlength: [3, 'Username must be at least 3 characters'],
+      maxlength: [30, 'Username cannot exceed 30 characters'],
+      match: [/^[a-zA-Z0-9_.-]+$/, 'Username can only contain alphanumeric characters, underscores, dots, and hyphens'],
+      index: true,
+    },
+    mobileNumber: {
+      type: String,
+      trim: true,
+    },
+    domains: [
+      {
+        type: String,
+        trim: true,
+      },
+    ],
     password: {
       type: String,
       required: [true, 'Password is required'],
@@ -32,11 +53,11 @@ const userSchema = new Schema<IUser>(
     },
     isVerified: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     emailVerified: {
       type: Boolean,
-      default: false,
+      default: true,
     },
     isActive: {
       type: Boolean,
@@ -81,6 +102,7 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.index({ email: 1 });
+userSchema.index({ username: 1 });
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) {

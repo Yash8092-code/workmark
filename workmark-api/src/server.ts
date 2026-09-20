@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 import { connectDB } from './config/db';
 import { errorHandler } from './middleware/errorHandler';
 import routes from './routes';
@@ -23,7 +24,11 @@ const limiter = rateLimit({
   skip: (req) => process.env.NODE_ENV !== 'production' && req.ip === '::1' || req.ip === '127.0.0.1',
 });
 
-app.use(helmet());
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -44,6 +49,7 @@ app.use(
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 app.use('/api', limiter);
 
 app.get('/', (req: Request, res: Response) => {

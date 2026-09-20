@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { ArrowLeft, Plus, X, Briefcase, DollarSign, ListChecks, Award, Sparkles, Building } from 'lucide-react';
 import { useCreateJob } from '../../hooks/useJobs';
 import { useMyCompany } from '../../hooks/useCompanies';
 import { Button } from '../../components/ui/Button';
@@ -20,13 +20,13 @@ const jobSchema = z.object({
   experienceLevel: z.string().min(1, 'Experience level is required'),
   workMode: z.string().min(1, 'Work mode is required'),
   location: z.string().min(1, 'Location is required'),
-  salaryMin: z.string().min(1, 'Minimum salary is required'),
-  salaryMax: z.string().min(1, 'Maximum salary is required'),
+  salaryMin: z.string().optional().or(z.literal('')),
+  salaryMax: z.string().optional().or(z.literal('')),
   salaryCurrency: z.string().default('INR'),
-  salaryPeriod: z.string().default('year'),
-  description: z.string().min(100, 'Description must be at least 100 characters'),
-  openings: z.string().min(1, 'Number of openings is required'),
-  deadline: z.string().optional(),
+  salaryPeriod: z.string().default('yearly'),
+  description: z.string().min(30, 'Description must be at least 30 characters'),
+  openings: z.string().default('1'),
+  deadline: z.string().optional().or(z.literal('')),
 });
 
 type JobFormData = z.infer<typeof jobSchema>;
@@ -51,6 +51,14 @@ export default function CreateJobPage() {
     formState: { errors },
   } = useForm<JobFormData>({
     resolver: zodResolver(jobSchema) as any,
+    defaultValues: {
+      salaryCurrency: 'INR',
+      salaryPeriod: 'yearly',
+      openings: '1',
+      workMode: 'remote',
+      employmentType: 'full-time',
+      experienceLevel: 'mid',
+    },
   });
 
   const addSkill = () => {
@@ -77,13 +85,25 @@ export default function CreateJobPage() {
 
   const onSubmit = async (data: JobFormData, isDraft: boolean = false) => {
     if (!company) {
-      toast.error('Create a company profile before posting a job');
+      toast.error('Please create a company profile first before posting jobs');
+      navigate('/employer/company/create');
       return;
     }
 
     const { salaryMin, salaryMax, salaryCurrency, salaryPeriod, openings, deadline, ...jobFields } = data;
 
     try {
+      const minVal = salaryMin && salaryMin.trim() ? parseInt(salaryMin) : undefined;
+      const maxVal = salaryMax && salaryMax.trim() ? parseInt(salaryMax) : undefined;
+      const salaryObj = (minVal !== undefined || maxVal !== undefined)
+        ? {
+            min: minVal,
+            max: maxVal,
+            currency: salaryCurrency || 'INR',
+            period: salaryPeriod === 'year' ? 'yearly' : salaryPeriod === 'month' ? 'monthly' : (salaryPeriod || 'yearly'),
+          }
+        : undefined;
+
       await createJob.mutateAsync({
         ...jobFields,
         companyId: company._id,
@@ -91,350 +111,429 @@ export default function CreateJobPage() {
         responsibilities,
         requirements,
         benefits,
-        salary: {
-          min: parseInt(data.salaryMin),
-          max: parseInt(data.salaryMax),
-          currency: data.salaryCurrency,
-          period: data.salaryPeriod,
-        },
-        openings: parseInt(data.openings),
-        deadline: data.deadline || undefined,
+        ...(salaryObj ? { salary: salaryObj } : {}),
+        openings: openings ? parseInt(openings) : 1,
+        deadline: deadline || undefined,
         status: isDraft ? 'draft' : 'active',
       });
-      toast.success(isDraft ? 'Job saved as draft!' : 'Job published successfully!');
       navigate('/employer/jobs');
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to create job');
+      console.error('Error creating job:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to create job');
     }
   };
 
+  const onFormError = (formErrors: any) => {
+    console.error('Job form validation errors:', formErrors);
+    const firstError = Object.values(formErrors)[0] as any;
+    toast.error(firstError?.message || 'Please check required fields in your job form');
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8FAFC] py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <button
-          onClick={() => navigate('/employer/jobs')}
-          className="flex items-center gap-2 text-[#64748B] hover:text-[#172033] mb-6"
-        >
-          <ArrowLeft className="w-5 h-5" />
-          Back to Jobs
-        </button>
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-fadeIn">
+      {/* Back button */}
+      <button
+        onClick={() => navigate('/employer/jobs')}
+        className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl text-sm font-bold text-[#7E7C9A] hover:text-[#25243A] hover:bg-[#E6E8F2]/60 transition-all mb-6"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Back to Jobs Hub
+      </button>
 
-        <div className="bg-white rounded-lg border border-[#E2E8F0] p-6 sm:p-8">
-          <h1 className="text-2xl font-bold text-[#0F2747] mb-6">Post a New Job</h1>
-
-          <form className="space-y-8">
-            {/* Basic Information */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Basic Information</h2>
-
-              <Input
-                label="Job Title"
-                {...register('title')}
-                error={errors.title?.message}
-                placeholder="Senior Full Stack Developer"
-              />
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Select label="Category" {...register('category')} error={errors.category?.message}>
-                  <option value="">Select Category</option>
-                  <option value="Software Development">Software Development</option>
-                  <option value="Data Science">Data Science</option>
-                  <option value="Design">Design</option>
-                  <option value="Marketing">Marketing</option>
-                  <option value="Sales">Sales</option>
-                  <option value="Finance">Finance</option>
-                  <option value="Human Resources">Human Resources</option>
-                  <option value="Customer Support">Customer Support</option>
-                  <option value="Product Management">Product Management</option>
-                  <option value="Operations">Operations</option>
-                </Select>
-
-                <Select
-                  label="Employment Type"
-                  {...register('employmentType')}
-                  error={errors.employmentType?.message}
-                >
-                  <option value="">Select Type</option>
-                  <option value="full-time">Full Time</option>
-                  <option value="part-time">Part Time</option>
-                  <option value="internship">Internship</option>
-                  <option value="contract">Contract</option>
-                </Select>
-
-                <Select
-                  label="Experience Level"
-                  {...register('experienceLevel')}
-                  error={errors.experienceLevel?.message}
-                >
-                  <option value="">Select Level</option>
-                  <option value="entry">Entry Level</option>
-                  <option value="mid">Mid Level</option>
-                  <option value="senior">Senior</option>
-                  <option value="lead">Lead</option>
-                </Select>
-
-                <Select label="Work Mode" {...register('workMode')} error={errors.workMode?.message}>
-                  <option value="">Select Mode</option>
-                  <option value="onsite">On-site</option>
-                  <option value="hybrid">Hybrid</option>
-                  <option value="remote">Remote</option>
-                </Select>
+      {!company && !companyLoading && (
+        <div className="clay-card p-6 mb-8 border-l-4 border-l-[#FFB84D] bg-[#FFFBEB]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-[#FFB84D]/20 flex items-center justify-center flex-shrink-0">
+                <Building className="w-5 h-5 text-[#B45309]" />
               </div>
-
-              <Input
-                label="Location"
-                {...register('location')}
-                error={errors.location?.message}
-                placeholder="Kolkata, India"
-              />
-            </div>
-
-            {/* Salary */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Salary Range</h2>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Input
-                  label="Minimum"
-                  {...register('salaryMin')}
-                  error={errors.salaryMin?.message}
-                  placeholder="800000"
-                  type="number"
-                />
-
-                <Input
-                  label="Maximum"
-                  {...register('salaryMax')}
-                  error={errors.salaryMax?.message}
-                  placeholder="1400000"
-                  type="number"
-                />
-
-                <Select label="Currency" {...register('salaryCurrency')}>
-                  <option value="INR">INR (₹)</option>
-                  <option value="USD">USD ($)</option>
-                </Select>
-
-                <Select label="Period" {...register('salaryPeriod')}>
-                  <option value="yearly">Per Year</option>
-                  <option value="month">Per Month</option>
-                </Select>
+              <div>
+                <h3 className="text-sm font-bold text-[#92400E]">Company Profile Required</h3>
+                <p className="text-xs text-[#B45309] mt-0.5">
+                  You must set up your verified employer profile before publishing openings.
+                </p>
               </div>
             </div>
+            <Button size="sm" variant="primary" onClick={() => navigate('/employer/company/create')}>
+              Create Profile Now
+            </Button>
+          </div>
+        </div>
+      )}
 
-            {/* Description */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Job Description</h2>
+      {/* Main Form Container */}
+      <div className="clay-card p-6 sm:p-8 space-y-8">
+        <div>
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-[#EDE9FE] text-[#6C5CE7] mb-2">
+            <Sparkles className="w-3.5 h-3.5" />
+            New Recruitment Campaign
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-black text-[#25243A]">Post a New Opening</h1>
+          <p className="text-sm font-medium text-[#7E7C9A] mt-1">
+            Specify candidate requirements, compensation, and workflow parameters.
+          </p>
+        </div>
 
-              <Textarea
-                label="Description"
-                {...register('description')}
-                error={errors.description?.message}
-                placeholder="Describe the role, team, and what the candidate will be working on..."
-                rows={6}
-              />
+        <form className="space-y-8">
+          {/* Section: Basic Information */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2.5 text-[#6C5CE7] font-black text-sm uppercase tracking-wider">
+              <Briefcase className="w-4 h-4" />
+              Role Essentials
             </div>
 
-            {/* Skills */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Required Skills</h2>
+            <Input
+              label="Job Title"
+              {...register('title')}
+              error={errors.title?.message}
+              placeholder="e.g. Senior Full Stack Engineer"
+            />
 
-              <div className="flex gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Select label="Category" {...register('category')} error={errors.category?.message}>
+                <option value="">Select Category</option>
+                <option value="Software Development">Software Development</option>
+                <option value="Data Science">Data Science</option>
+                <option value="Design">Design</option>
+                <option value="Marketing">Marketing</option>
+                <option value="Sales">Sales</option>
+                <option value="Finance">Finance</option>
+                <option value="Human Resources">Human Resources</option>
+                <option value="Customer Support">Customer Support</option>
+                <option value="Product Management">Product Management</option>
+                <option value="Operations">Operations</option>
+              </Select>
+
+              <Select
+                label="Employment Type"
+                {...register('employmentType')}
+                error={errors.employmentType?.message}
+              >
+                <option value="full-time">Full-Time</option>
+                <option value="part-time">Part-Time</option>
+                <option value="internship">Internship</option>
+                <option value="contract">Contract</option>
+              </Select>
+
+              <Select
+                label="Experience Level"
+                {...register('experienceLevel')}
+                error={errors.experienceLevel?.message}
+              >
+                <option value="entry">Entry Level / Graduate</option>
+                <option value="mid">Mid Level (1-3 yrs)</option>
+                <option value="senior">Senior (3-6 yrs)</option>
+                <option value="lead">Lead / Principal (6+ yrs)</option>
+              </Select>
+
+              <Select label="Work Mode" {...register('workMode')} error={errors.workMode?.message}>
+                <option value="remote">Remote</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="onsite">On-Site</option>
+              </Select>
+            </div>
+
+            <Input
+              label="Location"
+              {...register('location')}
+              error={errors.location?.message}
+              placeholder="e.g. Bengaluru, India or Remote"
+            />
+          </div>
+
+          {/* Section: Compensation */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2.5 text-[#6C5CE7] font-black text-sm uppercase tracking-wider">
+              <DollarSign className="w-4 h-4" />
+              Compensation Structure
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              <Input
+                label="Min Salary"
+                {...register('salaryMin')}
+                error={errors.salaryMin?.message}
+                placeholder="e.g. 1200000"
+                type="number"
+              />
+
+              <Input
+                label="Max Salary"
+                {...register('salaryMax')}
+                error={errors.salaryMax?.message}
+                placeholder="e.g. 1800000"
+                type="number"
+              />
+
+              <Select label="Currency" {...register('salaryCurrency')}>
+                <option value="INR">INR (₹)</option>
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </Select>
+
+              <Select label="Frequency" {...register('salaryPeriod')}>
+                <option value="yearly">Per Year</option>
+                <option value="monthly">Per Month</option>
+                <option value="hourly">Per Hour</option>
+              </Select>
+            </div>
+          </div>
+
+          {/* Section: Job Description */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2.5 text-[#6C5CE7] font-black text-sm uppercase tracking-wider">
+              <ListChecks className="w-4 h-4" />
+              Detailed Description
+            </div>
+
+            <Textarea
+              label="Role Overview & Objectives"
+              {...register('description')}
+              error={errors.description?.message}
+              placeholder="Describe the day-to-day mission, team culture, growth opportunities, and tech stack in detail..."
+              rows={6}
+            />
+          </div>
+
+          {/* Section: Skills & Competencies */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <div className="flex items-center gap-2.5 text-[#6C5CE7] font-black text-sm uppercase tracking-wider">
+              <Award className="w-4 h-4" />
+              Key Skills & Tech Stack
+            </div>
+
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Input
                   label=""
                   value={skillInput}
                   onChange={(e) => setSkillInput(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSkill())}
-                  placeholder="Add a skill (e.g., React, Node.js)"
+                  placeholder="Type a skill (e.g., React, TypeScript, GraphQL) and press Enter"
                 />
-                <Button type="button" variant="outline" onClick={addSkill} className="mt-0">
-                  <Plus className="w-5 h-5" />
-                </Button>
               </div>
-
-              <div className="flex flex-wrap gap-2">
-                {skills.map((skill) => (
-                  <Badge key={skill} variant="default" className="flex items-center gap-1">
-                    {skill}
-                    <button type="button" onClick={() => removeSkill(skill)}>
-                      <X className="w-3 h-3" />
-                    </button>
-                  </Badge>
-                ))}
-              </div>
+              <Button type="button" variant="secondary" onClick={addSkill} className="mt-0">
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
             </div>
 
-            {/* Responsibilities */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Responsibilities</h2>
+            <div className="flex flex-wrap gap-2 pt-2">
+              {skills.map((skill) => (
+                <Badge key={skill} variant="primary" className="flex items-center gap-1.5 py-1 px-3">
+                  {skill}
+                  <button type="button" onClick={() => removeSkill(skill)} className="hover:text-red-500">
+                    <X className="w-3 h-3" />
+                  </button>
+                </Badge>
+              ))}
+              {skills.length === 0 && (
+                <span className="text-xs font-semibold text-[#7E7C9A]">No skills added yet.</span>
+              )}
+            </div>
+          </div>
 
-              <div className="flex gap-2">
+          {/* Section: Responsibilities */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <h3 className="text-sm font-black text-[#25243A] uppercase tracking-wider">Key Responsibilities</h3>
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Input
                   label=""
                   value={responsibilityInput}
                   onChange={(e) => setResponsibilityInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItem(responsibilities, setResponsibilities, responsibilityInput, setResponsibilityInput))}
-                  placeholder="Add a responsibility"
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' &&
+                    (e.preventDefault(),
+                    addItem(responsibilities, setResponsibilities, responsibilityInput, setResponsibilityInput))
+                  }
+                  placeholder="Add a core responsibility..."
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addItem(responsibilities, setResponsibilities, responsibilityInput, setResponsibilityInput)}
-                  className="mt-0"
-                >
-                  <Plus className="w-5 h-5" />
-                </Button>
               </div>
-
-              <ul className="space-y-2">
-                {responsibilities.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[#172033]">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2563EB] flex-shrink-0" />
-                    <span className="flex-1">{item}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(responsibilities, setResponsibilities, item)}
-                      className="text-[#DC2626] hover:text-[#991B1B]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => addItem(responsibilities, setResponsibilities, responsibilityInput, setResponsibilityInput)}
+                className="mt-0"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
             </div>
 
-            {/* Requirements */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Requirements</h2>
+            <ul className="space-y-2 pt-2">
+              {responsibilities.map((item, index) => (
+                <li
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 shadow-sm border border-white/10 text-sm text-white font-medium"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#6C5CE7]" />
+                    {item}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(responsibilities, setResponsibilities, item)}
+                    className="text-[#FF6B81] hover:text-[#DC2626] p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-              <div className="flex gap-2">
+          {/* Section: Requirements */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <h3 className="text-sm font-black text-[#25243A] uppercase tracking-wider">Qualifications & Requirements</h3>
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Input
                   label=""
                   value={requirementInput}
                   onChange={(e) => setRequirementInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItem(requirements, setRequirements, requirementInput, setRequirementInput))}
-                  placeholder="Add a requirement"
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' &&
+                    (e.preventDefault(),
+                    addItem(requirements, setRequirements, requirementInput, setRequirementInput))
+                  }
+                  placeholder="Add a qualification / prerequisite..."
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addItem(requirements, setRequirements, requirementInput, setRequirementInput)}
-                  className="mt-0"
-                >
-                  <Plus className="w-5 h-5" />
-                </Button>
               </div>
-
-              <ul className="space-y-2">
-                {requirements.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[#172033]">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#2563EB] flex-shrink-0" />
-                    <span className="flex-1">{item}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(requirements, setRequirements, item)}
-                      className="text-[#DC2626] hover:text-[#991B1B]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => addItem(requirements, setRequirements, requirementInput, setRequirementInput)}
+                className="mt-0"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
             </div>
 
-            {/* Benefits */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Benefits</h2>
+            <ul className="space-y-2 pt-2">
+              {requirements.map((item, index) => (
+                <li
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 shadow-sm border border-white/10 text-sm text-white font-medium"
+                >
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#35C98A]" />
+                    {item}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(requirements, setRequirements, item)}
+                    className="text-[#FF6B81] hover:text-[#DC2626] p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-              <div className="flex gap-2">
+          {/* Section: Benefits */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <h3 className="text-sm font-black text-[#25243A] uppercase tracking-wider">Perks & Benefits</h3>
+            <div className="flex gap-2">
+              <div className="flex-1">
                 <Input
                   label=""
                   value={benefitInput}
                   onChange={(e) => setBenefitInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItem(benefits, setBenefits, benefitInput, setBenefitInput))}
-                  placeholder="Add a benefit"
+                  onKeyPress={(e) =>
+                    e.key === 'Enter' &&
+                    (e.preventDefault(),
+                    addItem(benefits, setBenefits, benefitInput, setBenefitInput))
+                  }
+                  placeholder="e.g. Health Insurance, Home Office Budget, Wellness Stipend"
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => addItem(benefits, setBenefits, benefitInput, setBenefitInput)}
-                  className="mt-0"
+              </div>
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => addItem(benefits, setBenefits, benefitInput, setBenefitInput)}
+                className="mt-0"
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Add
+              </Button>
+            </div>
+
+            <ul className="space-y-2 pt-2">
+              {benefits.map((item, index) => (
+                <li
+                  key={index}
+                  className="flex items-center justify-between p-3 rounded-xl bg-slate-900/80 shadow-sm border border-white/10 text-sm text-white font-medium"
                 >
-                  <Plus className="w-5 h-5" />
-                </Button>
-              </div>
+                  <span className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-[#8ED8FF]" />
+                    {item}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeItem(benefits, setBenefits, item)}
+                    className="text-[#FF6B81] hover:text-[#DC2626] p-1"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
 
-              <ul className="space-y-2">
-                {benefits.map((item, index) => (
-                  <li key={index} className="flex items-start gap-2 text-[#172033]">
-                    <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#16A34A] flex-shrink-0" />
-                    <span className="flex-1">{item}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeItem(benefits, setBenefits, item)}
-                      className="text-[#DC2626] hover:text-[#991B1B]"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </li>
-                ))}
-              </ul>
+          {/* Section: Openings & Deadlines */}
+          <div className="clay-card-soft p-5 sm:p-6 space-y-4">
+            <h3 className="text-sm font-black text-[#25243A] uppercase tracking-wider">Openings & Deadlines</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Input
+                label="Number of Positions"
+                {...register('openings')}
+                error={errors.openings?.message}
+                placeholder="1"
+                type="number"
+              />
+
+              <Input
+                label="Application Deadline (Optional)"
+                {...register('deadline')}
+                error={errors.deadline?.message}
+                type="date"
+              />
             </div>
+          </div>
 
-            {/* Additional Info */}
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold text-[#172033]">Additional Information</h2>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Number of Openings"
-                  {...register('openings')}
-                  error={errors.openings?.message}
-                  placeholder="1"
-                  type="number"
-                />
-
-                <Input
-                  label="Application Deadline (Optional)"
-                  {...register('deadline')}
-                  error={errors.deadline?.message}
-                  type="date"
-                />
-              </div>
-            </div>
-
-            {/* Submit Buttons */}
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleSubmit((data) => onSubmit(data, false))}
-                loading={createJob.isPending || companyLoading}
-                disabled={!company}
-                className="flex-1"
-              >
-                Publish Job
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleSubmit((data) => onSubmit(data, true))}
-                loading={createJob.isPending || companyLoading}
-                disabled={!company}
-                className="flex-1"
-              >
-                Save as Draft
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => navigate('/employer/jobs')}
-              >
-                Cancel
-              </Button>
-            </div>
-          </form>
-        </div>
+          {/* In-Flight Guarded Actions */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-4 border-t border-[#E6E8F2]">
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSubmit((data) => onSubmit(data, false), onFormError)}
+              loading={createJob.isPending || companyLoading}
+              className="flex-1"
+            >
+              Publish Active Opening
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleSubmit((data) => onSubmit(data, true), onFormError)}
+              loading={createJob.isPending || companyLoading}
+              className="flex-1"
+            >
+              Save as Draft
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => navigate('/employer/jobs')}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

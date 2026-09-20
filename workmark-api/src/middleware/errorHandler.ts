@@ -14,8 +14,16 @@ export const errorHandler = (err: Error, req: Request, res: Response, next: Next
   }
 
   if ((err as any).code === 11000) {
-    const field = Object.keys((err as any).keyPattern)[0];
-    const message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
+    const keyPattern = (err as any).keyPattern || {};
+    const field = Object.keys(keyPattern)[0] || 'Record';
+    let message = `${field.charAt(0).toUpperCase() + field.slice(1)} already exists`;
+    if (keyPattern.source && keyPattern.externalId) {
+      message = 'This external job listing has already been imported.';
+    } else if (keyPattern.email) {
+      message = 'An account with this email address already exists.';
+    } else if (keyPattern.userId) {
+      message = 'A profile for this user already exists.';
+    }
     error = new AppError(message, 400);
   }
 

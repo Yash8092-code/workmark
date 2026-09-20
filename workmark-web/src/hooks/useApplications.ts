@@ -57,15 +57,31 @@ export const useUpdateApplicationStatus = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, status, note }: { id: string; status: ApplicationStatus; note?: string }) =>
-      applicationsApi.updateApplicationStatus(id, status, note),
+    mutationFn: ({
+      id,
+      status,
+      note,
+      payload,
+    }: {
+      id: string;
+      status?: ApplicationStatus;
+      note?: string;
+      payload?: applicationsApi.UpdateStatusPayload;
+    }) => {
+      const data = payload || { status, note };
+      return applicationsApi.updateApplicationStatus(id, data);
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['application', variables.id] });
       queryClient.invalidateQueries({ queryKey: ['job-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['employer-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+      queryClient.invalidateQueries({ queryKey: ['my-applications'] });
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
       toast.success('Application status updated!');
     },
     onError: (error: any) => {
-      toast.error(error.message || 'Failed to update application status');
+      toast.error(error?.response?.data?.message || error.message || 'Failed to update application status');
     },
   });
 };

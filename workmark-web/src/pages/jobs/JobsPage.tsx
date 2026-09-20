@@ -180,6 +180,18 @@ export const JobsPage: React.FC = () => {
   };
 
   const handleRemoveFilter = (key: keyof JobFiltersType, specificValue?: string) => {
+    if (key === 'city' || key === 'location') {
+      updateUrlParams({ ...filters, city: undefined, location: undefined }, 1);
+      return;
+    }
+    if (key === 'search' || key === 'keyword') {
+      updateUrlParams({ ...filters, search: undefined, keyword: undefined }, 1);
+      return;
+    }
+    if (key === 'salaryMin' || key === 'salaryMax') {
+      updateUrlParams({ ...filters, salaryMin: undefined, salaryMax: undefined }, 1);
+      return;
+    }
     if (specificValue && Array.isArray(filters[key])) {
       const currentList = (filters[key] as unknown as string[]) || [];
       const updatedList = currentList.filter((item) => item !== specificValue);
@@ -204,10 +216,7 @@ export const JobsPage: React.FC = () => {
     if (filters.city || filters.location) {
       chips.push({
         label: `Location: ${filters.city || filters.location}`,
-        onRemove: () => {
-          handleRemoveFilter('city');
-          handleRemoveFilter('location');
-        },
+        onRemove: () => handleRemoveFilter('city'),
       });
     }
     if (filters.country && filters.country !== 'all') {
@@ -243,11 +252,8 @@ export const JobsPage: React.FC = () => {
     });
     if (filters.salaryMin || filters.salaryMax) {
       chips.push({
-        label: `Salary: ${filters.salaryMin ? `$${filters.salaryMin}` : '$0'} – ${filters.salaryMax ? `$${filters.salaryMax}` : 'Max'}`,
-        onRemove: () => {
-          handleRemoveFilter('salaryMin');
-          handleRemoveFilter('salaryMax');
-        },
+        label: `Salary: ${filters.salaryMin ? `₹${filters.salaryMin}` : '₹0'} – ${filters.salaryMax ? `₹${filters.salaryMax}` : 'Max'}`,
+        onRemove: () => handleRemoveFilter('salaryMin'),
       });
     }
     if (filters.salaryDisclosed) {
@@ -274,17 +280,17 @@ export const JobsPage: React.FC = () => {
 
   return (
     <PublicLayout>
-      <div className="bg-[#F8FAFC] min-h-screen pb-16 subtle-mesh">
+      <div className="min-h-screen pb-16 animate-fadeIn">
         {/* Top Search Hero */}
-        <div className="bg-white border-b border-[#E2E8F0] py-8 sm:py-10 shadow-xs">
+        <div className="py-8 sm:py-10">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center max-w-2xl mx-auto mb-6">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-[#0F172A] tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-black text-[#25243A] tracking-tight">
                 Find Opportunities That Fit You
               </h1>
-              <p className="mt-2 text-sm text-[#64748B]">
+              <p className="mt-2 text-sm font-semibold text-[#7E7C9A]">
                 Discover personalized roles in{' '}
-                <span className="font-semibold text-[#0F172A]">
+                <span className="font-bold text-[#6C5CE7]">
                   {activeCountryFlag} {activeCountryName}
                 </span>{' '}
                 and worldwide
@@ -300,7 +306,7 @@ export const JobsPage: React.FC = () => {
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           {/* Prompt for existing users with no countryCode set */}
           {isAuthenticated && !user?.countryCode && (
             <CountrySetupPrompt
@@ -313,7 +319,7 @@ export const JobsPage: React.FC = () => {
           )}
 
           {/* Discovery Mode Switcher & Personalization Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs">
+          <div className="clay-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
               <DiscoveryModeBadge
                 mode={discoveryMode}
@@ -323,19 +329,19 @@ export const JobsPage: React.FC = () => {
               />
             </div>
 
-            <div className="flex items-center gap-3 text-xs text-[#64748B]">
-              <span className="flex items-center gap-1.5 font-medium">
-                <Sparkles className="h-3.5 w-3.5 text-[#2563EB]" />
+            <div className="flex items-center gap-3 text-xs text-[#7E7C9A] font-semibold">
+              <span className="flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-[#6C5CE7]" />
                 {discoveryMode === 'my_country' ? (
                   <span>
-                    Prioritizing jobs in{' '}
-                    <strong className="text-[#0F172A]">
+                    Prioritizing vacancies in{' '}
+                    <strong className="text-[#25243A]">
                       {activeCountryFlag} {activeCountryName}
                     </strong>
                   </span>
                 ) : (
                   <span>
-                    Showing opportunities from <strong className="text-[#0F172A]">All Countries</strong>
+                    Showing opportunities from <strong className="text-[#25243A]">All Countries</strong>
                   </span>
                 )}
               </span>
@@ -351,14 +357,14 @@ export const JobsPage: React.FC = () => {
 
           {/* Active Filter Chips */}
           {activeFilterChips.length > 0 && (
-            <div className="flex flex-wrap items-center gap-2 mb-6 p-3 bg-white/70 backdrop-blur-xs rounded-xl border border-[#E2E8F0]">
-              <span className="text-xs font-bold text-[#475569] uppercase tracking-wider mr-1">
-                Active ({activeFilterChips.length}):
+            <div className="clay-card-soft p-3 mb-6 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-black text-[#7E7C9A] uppercase tracking-wider mr-1">
+                Active Filters ({activeFilterChips.length}):
               </span>
               {activeFilterChips.map((chip, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-[#2563EB]/10 text-[#2563EB] border border-[#2563EB]/20"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-[#EDE9FE] text-[#6C5CE7] border border-[#DDD6FE]"
                 >
                   <span>{chip.label}</span>
                   <button
@@ -374,7 +380,7 @@ export const JobsPage: React.FC = () => {
               <button
                 type="button"
                 onClick={handleClearFilters}
-                className="text-xs font-bold text-[#DC2626] hover:underline ml-auto cursor-pointer"
+                className="text-xs font-bold text-[#FF6B81] hover:underline ml-auto cursor-pointer"
               >
                 Clear all
               </button>
@@ -396,11 +402,11 @@ export const JobsPage: React.FC = () => {
             {/* Mobile Filter Trigger Button */}
             <div className="lg:hidden">
               <Button
-                variant="outline"
+                variant="secondary"
                 onClick={() => setIsMobileFilterOpen(true)}
-                className="w-full justify-center rounded-xl py-3 font-semibold shadow-xs"
+                className="w-full justify-center"
               >
-                <SlidersHorizontal className="h-4 w-4 mr-2 text-[#2563EB]" />
+                <SlidersHorizontal className="h-4 w-4 mr-2 text-[#6C5CE7]" />
                 Filter Opportunities {activeFilterChips.length > 0 && `(${activeFilterChips.length})`}
               </Button>
             </div>
@@ -409,17 +415,17 @@ export const JobsPage: React.FC = () => {
             {isMobileFilterOpen && (
               <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
                 <div
-                  className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
+                  className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm transition-opacity"
                   onClick={() => setIsMobileFilterOpen(false)}
                 />
-                <div className="relative z-10 w-full max-w-sm bg-white overflow-y-auto shadow-2xl p-6 flex flex-col justify-between h-full">
+                <div className="relative z-10 w-full max-w-sm bg-[#0E1526] border-l border-white/10 overflow-y-auto shadow-2xl p-6 flex flex-col justify-between h-full text-slate-100">
                   <div>
-                    <div className="pb-4 border-b border-[#F1F5F9] flex items-center justify-between mb-4">
-                      <h2 className="text-lg font-bold text-[#0F172A]">Filters</h2>
+                    <div className="pb-4 border-b border-white/10 flex items-center justify-between mb-4">
+                      <h2 className="text-lg font-black text-white">Filters</h2>
                       <button
                         type="button"
                         onClick={() => setIsMobileFilterOpen(false)}
-                        className="p-1.5 rounded-lg text-[#64748B] hover:text-[#0F172A] hover:bg-[#F1F5F9] cursor-pointer"
+                        className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 cursor-pointer"
                       >
                         <X className="h-5 w-5" />
                       </button>
@@ -431,7 +437,8 @@ export const JobsPage: React.FC = () => {
                     />
                   </div>
                   <Button
-                    className="w-full mt-6 py-3 rounded-xl font-bold cursor-pointer"
+                    variant="primary"
+                    className="w-full mt-6 genz-btn-primary"
                     onClick={() => setIsMobileFilterOpen(false)}
                   >
                     Apply Filters
@@ -443,17 +450,17 @@ export const JobsPage: React.FC = () => {
             {/* Main Content: Jobs List */}
             <div className="flex-1 min-w-0">
               {/* Header Bar with Sorting & Results Count */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-4 border-b border-[#E2E8F0]">
+              <div className="genz-card p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
                 <div>
-                  <h2 className="text-xl font-bold text-[#0F172A] tracking-tight flex items-center gap-2">
-                    <span>{discoveryMode === 'my_country' ? 'Jobs for You' : 'Global Opportunities'}</span>
+                  <h2 className="text-lg font-black text-white tracking-tight flex items-center gap-2">
+                    <span>{discoveryMode === 'my_country' ? 'Vacancies for You' : 'Global Opportunities'}</span>
                     {!isLoading && totalCount > 0 && (
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#2563EB]/10 text-[#2563EB]">
+                      <span className="text-xs font-black px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/25">
                         {totalCount > 100 ? '100+' : totalCount} available
                       </span>
                     )}
                   </h2>
-                  <p className="text-xs text-[#64748B] mt-0.5">
+                  <p className="text-xs font-semibold text-slate-400 mt-0.5">
                     {discoveryMode === 'my_country'
                       ? `Tailored to your location in ${activeCountryName}`
                       : 'Browsing verified positions worldwide'}
@@ -462,12 +469,12 @@ export const JobsPage: React.FC = () => {
 
                 {/* Sort selector */}
                 <div className="flex items-center gap-2 self-start sm:self-auto">
-                  <ArrowUpDown className="h-3.5 w-3.5 text-[#94A3B8]" />
-                  <span className="text-xs font-semibold text-[#64748B]">Sort:</span>
+                  <ArrowUpDown className="h-3.5 w-3.5 text-cyan-400" />
+                  <span className="text-xs font-bold text-slate-400">Sort:</span>
                   <select
                     value={sortParam}
                     onChange={(e) => updateUrlParams(filters, 1, e.target.value)}
-                    className="text-xs font-semibold text-[#0F172A] bg-white border border-[#E2E8F0] rounded-xl px-3 py-1.5 focus:outline-none focus:border-[#2563EB] cursor-pointer"
+                    className="text-xs font-bold text-slate-100 bg-slate-900 border border-white/15 rounded-xl px-3 py-1.5 focus:outline-none focus:border-cyan-400 cursor-pointer shadow-xs"
                   >
                     <option value="recommended">Recommended</option>
                     <option value="newest">Newest First</option>
@@ -480,14 +487,14 @@ export const JobsPage: React.FC = () => {
 
               {/* Error State */}
               {isError && (
-                <div className="bg-red-50 border border-red-200 rounded-2xl p-6 text-center mb-6">
-                  <p className="text-sm font-semibold text-red-800 mb-2">
+                <div className="clay-card p-6 text-center mb-6 bg-[#FFF1F2] border border-[#FFE4E6]">
+                  <p className="text-sm font-bold text-[#E11D48] mb-2">
                     We're having trouble refreshing job listings right now.
                   </p>
-                  <p className="text-xs text-red-600 mb-4">
+                  <p className="text-xs text-[#E11D48] mb-4">
                     Please check your connection or try again in a moment.
                   </p>
-                  <Button variant="outline" size="sm" onClick={() => refetch()}>
+                  <Button variant="secondary" size="sm" onClick={() => refetch()}>
                     Try Again
                   </Button>
                 </div>
@@ -502,12 +509,12 @@ export const JobsPage: React.FC = () => {
                 </div>
               ) : data?.data?.length === 0 ? (
                 /* Personalized Empty State */
-                <div className="bg-white border border-[#E2E8F0] rounded-3xl p-8 sm:p-12 text-center shadow-xs">
-                  <div className="h-16 w-16 rounded-2xl bg-blue-50 text-[#2563EB] flex items-center justify-center mx-auto mb-4">
+                <div className="clay-card p-8 sm:p-12 text-center">
+                  <div className="h-16 w-16 rounded-2xl bg-[#EDE9FE] text-[#6C5CE7] flex items-center justify-center mx-auto mb-4">
                     <Briefcase className="h-8 w-8" />
                   </div>
-                  <h3 className="text-lg font-bold text-[#0F172A] mb-1">No matching jobs found</h3>
-                  <p className="text-sm text-[#64748B] max-w-md mx-auto mb-6 leading-relaxed">
+                  <h3 className="text-lg font-black text-[#25243A] mb-1">No matching jobs found</h3>
+                  <p className="text-sm font-medium text-[#7E7C9A] max-w-md mx-auto mb-6 leading-relaxed">
                     {discoveryMode === 'my_country'
                       ? `We couldn't find matching jobs in ${activeCountryName} right now with the active filters. Try broadening your criteria or explore worldwide opportunities.`
                       : 'No jobs matched your current filter criteria. Try adjusting keywords or clearing specific constraints.'}
@@ -515,10 +522,9 @@ export const JobsPage: React.FC = () => {
 
                   <div className="flex flex-wrap items-center justify-center gap-3">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={handleClearFilters}
-                      className="rounded-xl"
                     >
                       <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                       Clear Filters
@@ -526,9 +532,9 @@ export const JobsPage: React.FC = () => {
 
                     {discoveryMode === 'my_country' && (
                       <Button
+                        variant="primary"
                         size="sm"
                         onClick={() => handleDiscoveryModeChange('worldwide')}
-                        className="rounded-xl shadow-xs"
                       >
                         <Globe className="h-3.5 w-3.5 mr-1.5" />
                         Explore Worldwide
@@ -540,7 +546,6 @@ export const JobsPage: React.FC = () => {
                         variant="ghost"
                         size="sm"
                         onClick={() => navigate('/seeker/profile')}
-                        className="rounded-xl text-[#64748B]"
                       >
                         <MapPin className="h-3.5 w-3.5 mr-1.5" />
                         Change Country

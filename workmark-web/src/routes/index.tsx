@@ -34,6 +34,7 @@ import JobsManagementPage from '../pages/employer/JobsManagementPage';
 import CreateJobPage from '../pages/employer/CreateJobPage';
 import EditJobPage from '../pages/employer/EditJobPage';
 import CreateCompanyPage from '../pages/employer/CreateCompanyPage';
+import CompanyProfilePage from '../pages/employer/CompanyProfilePage';
 import EditCompanyPage from '../pages/employer/EditCompanyPage';
 import ApplicantsPage from '../pages/employer/ApplicantsPage';
 import CandidateDetailsPage from '../pages/employer/CandidateDetailsPage';
@@ -61,8 +62,8 @@ function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#F8FAFC] flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#2563EB]"></div>
+      <div className="min-h-screen bg-[#080C15] flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-400"></div>
       </div>
     );
   }
@@ -144,6 +145,9 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        {/* Seeker Redirects */}
+        <Route path="profile" element={<Navigate to="/seeker/profile" replace />} />
+        <Route path="profile/edit" element={<Navigate to="/seeker/profile/edit" replace />} />
 
         {/* Employer Routes */}
         <Route
@@ -195,10 +199,10 @@ export function AppRoutes() {
           }
         />
         <Route
-          path="employer/company/create"
+          path="employer/applications/:id"
           element={
             <ProtectedRoute allowedRoles={['employer']}>
-              <CreateCompanyPage />
+              <CandidateDetailsPage />
             </ProtectedRoute>
           }
         />
@@ -206,7 +210,15 @@ export function AppRoutes() {
           path="employer/company"
           element={
             <ProtectedRoute allowedRoles={['employer']}>
-              <EditCompanyPage />
+              <CompanyProfilePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="employer/company/create"
+          element={
+            <ProtectedRoute allowedRoles={['employer']}>
+              <CreateCompanyPage />
             </ProtectedRoute>
           }
         />
@@ -218,6 +230,8 @@ export function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route path="company" element={<Navigate to="/employer/company" replace />} />
+        <Route path="company/edit" element={<Navigate to="/employer/company/edit" replace />} />
 
         {/* Admin Routes */}
         <Route
