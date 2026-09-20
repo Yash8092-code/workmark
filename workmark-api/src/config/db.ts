@@ -1,6 +1,11 @@
 import mongoose from 'mongoose';
 
 export const connectDB = async (): Promise<void> => {
+  // Return cached connection if already connected or connecting
+  if (mongoose.connection.readyState === 1) {
+    return;
+  }
+
   try {
     mongoose.set('strictQuery', true);
     const mongoUri = process.env.MONGODB_URI;
@@ -30,6 +35,9 @@ export const connectDB = async (): Promise<void> => {
     }
   } catch (error) {
     console.error('MongoDB connection error:', error);
-    process.exit(1);
+    if (!process.env.VERCEL) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
